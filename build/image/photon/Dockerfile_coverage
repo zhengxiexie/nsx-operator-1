@@ -1,0 +1,18 @@
+FROM golang:1.16 as golang-build
+
+WORKDIR /source
+
+COPY . /source
+RUN mkdir -p /etc/nsx-ujo
+COPY ./build/image/photon/ncp.ini /etc/nsx-ujo/
+COPY ./build/image/photon/kubeconfig /etc/nsx-ujo/
+
+RUN cd cmd && \
+    GOPROXY=https://goproxy.io,direct go test -c -cover -covermode=count -coverpkg ../...
+
+
+FROM photon
+
+COPY --from=golang-build /source/cmd/cmd.test /usr/local/bin/
+
+#ENTRYPOINT [ "/usr/local/bin/cmd.test", "-systemTest", "-test.coverprofile", "coverage.cov", "-kubeconfig", "/etc/nsx-ujo/kubeconfig"]

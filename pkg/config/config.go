@@ -15,15 +15,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/auth"
-	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/auth/jwt"
 	ini "gopkg.in/ini.v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/auth"
+	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/auth/jwt"
 )
 
 //TODO replace to yaml
 const (
-	nsxOperatorDefaultConf = "/etc/nsx-operator/nsxop.ini"
+	nsxOperatorDefaultConf = "/etc/nsx-ujo/ncp.ini"
 )
 
 var (

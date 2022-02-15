@@ -80,6 +80,9 @@ docker-push: ## Push docker image with the manager.
 photon:
 	docker build -t github.com/vmware-tanzu/nsx-operator -f build/image/photon/Dockerfile .
 
+.PHONY: photon-coverage
+photon-coverage:
+	docker build -t github.com/vmware-tanzu/nsx-operator-coverage -f build/image/photon/Dockerfile_coverage .
 ##@ Deployment
 
 ifndef ignore-not-found
