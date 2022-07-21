@@ -21,7 +21,7 @@ func SecurityPolicyEqual(existingSecurityPolicy *model.SecurityPolicy, securityP
 func RulesEqual(existingRules []model.Rule, rules []model.Rule) (bool, []model.Rule) {
 	// sort the rules by id, otherwise expandRule may return different results, only the sequence of the
 	// rule is different, so sort by port number, and it avoids the needless updates.
-	var sortRules = func(rules []model.Rule) {
+	sortRules := func(rules []model.Rule) {
 		sort.Slice(rules, func(i, j int) bool {
 			return *(rules[i].Id) > *(rules[j].Id)
 		})
@@ -51,7 +51,7 @@ func RulesEqualDetail(existingRules []model.Rule, rules []model.Rule) bool {
 	for i := 0; i < len(rules); i++ {
 		r1, _ := simplifyRule(&existingRules[i]).GetDataValue__()
 		r2, _ := simplifyRule(&rules[i]).GetDataValue__()
-		var dataValueToJSONEncoder = cleanjson.NewDataValueToJsonEncoder()
+		dataValueToJSONEncoder := cleanjson.NewDataValueToJsonEncoder()
 		s1, _ := dataValueToJSONEncoder.Encode(r1)
 		s2, _ := dataValueToJSONEncoder.Encode(r2)
 		if s1 != s2 {
@@ -64,7 +64,7 @@ func RulesEqualDetail(existingRules []model.Rule, rules []model.Rule) bool {
 }
 
 func GroupsEqual(existingGroups []model.Group, groups []model.Group) bool {
-	var sortGroups = func(groups []model.Group) {
+	sortGroups := func(groups []model.Group) {
 		sort.Slice(groups, func(i, j int) bool {
 			return *(groups[i].Id) > *(groups[j].Id)
 		})

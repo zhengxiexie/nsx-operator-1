@@ -123,7 +123,7 @@ func (e *EnqueueRequestForPod) Raw(evt interface{}, q workqueue.RateLimitingInte
 }
 
 func getAllPodPortNames(pods []v1.Pod) sets.String {
-	var podPortNames = sets.NewString()
+	podPortNames := sets.NewString()
 	for _, pod := range pods {
 		for _, container := range pod.Spec.Containers {
 			for _, port := range container.Ports {

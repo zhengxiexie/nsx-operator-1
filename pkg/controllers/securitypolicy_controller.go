@@ -120,7 +120,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if controllerutil.ContainsFinalizer(obj, util.FinalizerName) {
 			metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteTotal, METRIC_RES_TYPE)
 			if err := r.Service.DeleteSecurityPolicy(obj.UID); err != nil {
-				log.Error(err, "deletion failed, would retry exponentially", "securitypolicy", req.NamespacedName)
+				log.Error(err, "failed to delete, would retry exponentially", "securitypolicy", req.NamespacedName)
 				deleteFail(r, &ctx, obj, &err)
 				return resultRequeue, err
 			}
@@ -220,6 +220,10 @@ func getExistingConditionOfType(conditionType v1alpha1.SecurityPolicyStatusCondi
 	return nil
 }
 
+// The reason why we watch Namespace and Pod is to make sure that the named port is synced to these CRs.
+// For example, when a pod's label is changed, we should reconcile the corresponding SecurityPolicy CR,
+// or when a namespace's label is changed, and the named port in pods of that namespace is what we
+// want accidentally, etc.
 func (r *SecurityPolicyReconciler) setupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.SecurityPolicy{}).

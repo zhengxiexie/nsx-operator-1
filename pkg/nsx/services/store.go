@@ -23,9 +23,7 @@ const (
 	resourceTypeRule           = "rule"
 )
 
-var (
-	PageSize int64 = 1000
-)
+var PageSize int64 = 1000
 
 func securityPolicyCRUIDScopeIndexFunc(obj interface{}) ([]string, error) {
 	res := make([]string, 0, 5)
@@ -208,7 +206,7 @@ func decrementPageSize(pageSize *int64) {
 }
 
 func transError(err error) error {
-	var typeConverter = bindings.NewTypeConverter()
+	typeConverter := bindings.NewTypeConverter()
 	typeConverter.SetMode(bindings.REST)
 	switch err.(type) {
 	case errors.ServiceUnavailable:
@@ -231,7 +229,8 @@ func transError(err error) error {
 }
 
 func getAll(service *SecurityPolicyService, obj *v1alpha1.SecurityPolicy,
-	nsxSecurityPolicy *model.SecurityPolicy) ([]model.Group, *model.SecurityPolicy, []model.Rule, error) {
+	nsxSecurityPolicy *model.SecurityPolicy,
+) ([]model.Group, *model.SecurityPolicy, []model.Rule, error) {
 	indexResults, err := service.GroupStore.ByIndex(util.TagScopeSecurityPolicyCRUID, string(obj.UID))
 	if err != nil {
 		return nil, nil, nil, err

@@ -29,7 +29,6 @@ func init() {
 }
 
 func ZapLogger(cf *config.NSXOperatorConfig) logr.Logger {
-
 	encoderConf := zapcore.EncoderConfig{
 		CallerKey:      "caller_line",
 		LevelKey:       "level_name",

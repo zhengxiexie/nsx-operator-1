@@ -37,9 +37,7 @@ type SecurityPolicyService struct {
 	RuleStore           cache.Indexer
 }
 
-var (
-	log = logf.Log.WithName("service").WithName("firewall")
-)
+var log = logf.Log.WithName("service").WithName("firewall")
 
 // InitializeSecurityPolicy sync NSX resources
 func InitializeSecurityPolicy(NSXClient *nsx.Client, cf *config.NSXOperatorConfig) (*SecurityPolicyService, error) {
@@ -107,11 +105,11 @@ func (service *SecurityPolicyService) OperateSecurityPolicy(obj *v1alpha1.Securi
 	if spEqual && ruleEqual {
 		log.Info("security policy and rules not changed, skip", "nsxSecurityPolicy.Id", nsxSecurityPolicy.Id)
 	} else {
-		err = service.updateOrDeleteRules(nsxSecurityPolicy, legacyRules)
+		err := service.updateOrDeleteRules(nsxSecurityPolicy, legacyRules)
 		if err != nil {
 			return err
 		}
-		err := service.createOrUpdateSecurityPolicy(nsxSecurityPolicy)
+		err = service.createOrUpdateSecurityPolicy(nsxSecurityPolicy)
 		if err != nil {
 			return err
 		}
