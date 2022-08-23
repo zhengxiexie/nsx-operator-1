@@ -63,3 +63,42 @@ func TestNormalizeLabels(t *testing.T) {
 		})
 	}
 }
+
+func TestContains(t *testing.T) {
+	type args struct {
+		s   []string
+		str string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"1", args{[]string{"test", "test2"}, "test"}, true},
+		{"2", args{[]string{"test2", "test3"}, "test"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, Contains(tt.args.s, tt.args.str), "Contains(%v, %v)", tt.args.s, tt.args.str)
+			assert.Equal(t, tt.want, Contains(tt.args.s, tt.args.str), "Contains(%v, %v)", tt.args.s, tt.args.str)
+		})
+	}
+}
+
+func TestRemoveDuplicateStr(t *testing.T) {
+	type args struct {
+		strSlice []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{"1", args{[]string{"test", "test", "test"}}, []string{"test"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, RemoveDuplicateStr(tt.args.strSlice), "RemoveDuplicateStr(%v)", tt.args.strSlice)
+		})
+	}
+}

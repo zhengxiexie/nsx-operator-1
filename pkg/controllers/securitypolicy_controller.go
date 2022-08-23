@@ -11,14 +11,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vmware/vsphere-automation-sdk-go/services/nsxt/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
 	"github.com/vmware-tanzu/nsx-operator/pkg/metrics"
@@ -100,7 +102,7 @@ func (r *SecurityPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	} else {
 		if containsString(obj.GetFinalizers(), util.FinalizerName) {
 			metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteTotal, METRIC_RES_TYPE)
-			if err := r.Service.DeleteSecurityPolicy(obj.UID); err != nil {
+			if err := r.Service.DeleteSecurityPolicy(obj); err != nil {
 				metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteFailTotal, METRIC_RES_TYPE)
 				return ctrl.Result{}, err
 			}
@@ -211,6 +213,16 @@ func containsString(source []string, target string) bool {
 func (r *SecurityPolicyReconciler) setupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.SecurityPolicy{}).
+		WithEventFilter(predicate.Funcs{
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				// Ignore updates to CR status in which case metadata.Generation does not change
+				return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				// Suppress Delete events to avoid filtering them out in the Reconcile function
+				return false
+			},
+		}).
 		Complete(r)
 }
 
@@ -229,17 +241,19 @@ func (r *SecurityPolicyReconciler) Start(mgr ctrl.Manager) error {
 // cancel is used to break the loop during UT
 func (r *SecurityPolicyReconciler) GarbageCollector(cancel chan bool, timeout time.Duration) {
 	ctx := context.Background()
-	log.V(1).Info("garbage collector started")
 	for {
 		select {
 		case <-cancel:
 			return
 		case <-time.After(timeout):
 		}
-		nsxPolicySet := r.Service.ListSecurityPolicy()
-		if len(nsxPolicySet) == 0 {
+
+		keys := r.Service.ListSecurityPolicyKeys()
+		if len(keys) == 0 {
 			continue
 		}
+
+		policyMap := make(map[string]v1alpha1.SecurityPolicy)
 		policyList := &v1alpha1.SecurityPolicyList{}
 		err := r.Client.List(ctx, policyList)
 		if err != nil {
@@ -247,22 +261,31 @@ func (r *SecurityPolicyReconciler) GarbageCollector(cancel chan bool, timeout ti
 			continue
 		}
 
-		CRPolicySet := sets.NewString()
 		for _, policy := range policyList.Items {
-			CRPolicySet.Insert(string(policy.UID))
+			policyMap[string(policy.UID)] = policy
 		}
 
-		for elem := range nsxPolicySet {
-			if CRPolicySet.Has(elem) {
+		for _, key := range keys {
+			t, exists, err := r.Service.SecurityPolicyStore.GetByKey(key)
+			if err != nil || !exists {
+				log.Error(err, "failed to get security policy from store")
 				continue
 			}
-			log.V(1).Info("GC collected SecurityPolicy CR", "UID", elem)
-			metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteTotal, METRIC_RES_TYPE)
-			err = r.Service.DeleteSecurityPolicy(types.UID(elem))
-			if err != nil {
-				metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteFailTotal, METRIC_RES_TYPE)
-			} else {
-				metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteSuccessTotal, METRIC_RES_TYPE)
+			nsxPolicy := t.(model.SecurityPolicy)
+			for _, tag := range nsxPolicy.Tags {
+				if *tag.Scope == util.TagScopeSecurityPolicyCRUID {
+					nsxPolicyUID := *tag.Tag
+					if policy, ok := policyMap[nsxPolicyUID]; !ok {
+						log.V(1).Info("GC collected SecurityPolicy CR", "policy", policy)
+						metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteTotal, METRIC_RES_TYPE)
+						err = r.Service.DeleteSecurityPolicy(&nsxPolicy)
+						if err != nil {
+							metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteFailTotal, METRIC_RES_TYPE)
+						} else {
+							metrics.CounterInc(r.Service.NSXConfig, metrics.ControllerDeleteSuccessTotal, METRIC_RES_TYPE)
+						}
+					}
+				}
 			}
 		}
 	}
