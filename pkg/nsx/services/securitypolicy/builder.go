@@ -89,6 +89,7 @@ func (service *SecurityPolicyService) buildSecurityPolicy(obj *v1alpha1.Security
 	nsxSecurityPolicy.Rules = nsxRules
 	nsxSecurityPolicy.Tags = service.buildBasicTags(obj)
 	log.V(1).Info("built nsxSecurityPolicy", "nsxSecurityPolicy", nsxSecurityPolicy)
+	log.V(1).Info("built groups", "nsxGroups", nsxGroups)
 	return nsxSecurityPolicy, &nsxGroups, nil
 }
 
