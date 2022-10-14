@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
+	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/common"
 	util2 "github.com/vmware-tanzu/nsx-operator/pkg/nsx/util"
 	"github.com/vmware-tanzu/nsx-operator/pkg/util"
 )
@@ -50,6 +51,8 @@ func (service *SecurityPolicyService) expandRuleByPort(obj *v1alpha1.SecurityPol
 	var nsxGroups []*model.Group
 	var nsxRules []*model.Rule
 
+	GroupStore := service.Store[common.ResourceTypeGroup]
+
 	// Use PortAddress to handle normal port and named port, if it only contains int value Port,
 	// then it is a normal port. If it contains a list of IPs, it is a named port.
 	if port.Port.Type == intstr.Int {
@@ -63,7 +66,7 @@ func (service *SecurityPolicyService) expandRuleByPort(obj *v1alpha1.SecurityPol
 		if err != nil {
 			// Update the stale ip set group if stale ips exist
 			if errors.As(err, &util2.NoEffectiveOption{}) {
-				indexResults, err2 := service.GroupStore.ByIndex(util.TagScopeRuleID, service.buildRuleID(obj, ruleIdx))
+				indexResults, err2 := GroupStore.ByIndex(util.TagScopeRuleID, service.buildRuleID(obj, ruleIdx))
 				if err2 != nil {
 					return nil, nil, err2
 				}

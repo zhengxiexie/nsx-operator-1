@@ -26,6 +26,7 @@ const (
 )
 
 var (
+	ResourceType               string = "resource_type"
 	ResourceTypeSecurityPolicy string = "SecurityPolicy"
 	ResourceTypeGroup          string = "Group"
 	ResourceTypeRule           string = "Rule"

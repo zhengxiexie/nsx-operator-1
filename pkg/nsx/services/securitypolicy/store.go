@@ -1,153 +1,132 @@
 package securitypolicy
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-	"sync"
-
+	"github.com/vmware/vsphere-automation-sdk-go/runtime/data"
 	"github.com/vmware/vsphere-automation-sdk-go/services/nsxt/model"
+	"k8s.io/client-go/tools/cache"
 
-	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/common"
-	util2 "github.com/vmware-tanzu/nsx-operator/pkg/nsx/util"
 	"github.com/vmware-tanzu/nsx-operator/pkg/util"
 )
 
-func queryTagCondition(service *SecurityPolicyService) string {
-	return fmt.Sprintf("tags.scope:%s AND tags.tag:%s",
-		strings.Replace(util.TagScopeCluster, "/", "\\/", -1),
-		strings.Replace(service.NSXClient.NsxConfig.Cluster, ":", "\\:", -1))
+var key = util.TagScopeSecurityPolicyCRUID
+
+func keyFuncSecurityPolicy(obj interface{}) (string, error) {
+	o := obj.(model.SecurityPolicy)
+	return *o.Id, nil
 }
 
-func queryGroup(service *SecurityPolicyService, wg *sync.WaitGroup, fatalErrors chan error) {
-	defer wg.Done()
-	queryParam := fmt.Sprintf("%s:%s", common.ResourceType, common.ResourceTypeGroup) + " AND " + queryTagCondition(service)
-	var cursor *string = nil
-	pageSize := common.PageSize
-	for {
-		response, err := service.NSXClient.QueryClient.List(queryParam, cursor, nil, &pageSize, nil, nil)
-		err = common.TransError(err)
-		if _, ok := err.(util2.PageMaxError); ok == true {
-			common.DecrementPageSize(&pageSize)
-			continue
-		}
-		if err != nil {
-			fatalErrors <- err
-		}
-		for _, g := range response.Results {
-			a, err := Converter.ConvertToGolang(g, model.GroupBindingType())
-			if err != nil {
-				for _, e := range err {
-					fatalErrors <- e
-				}
-			}
-			c, _ := a.(model.Group)
-			err2 := service.GroupStore.Add(c)
-			if err2 != nil {
-				fatalErrors <- err2
-			}
-		}
-		cursor = response.Cursor
-		if cursor == nil {
-			break
-		}
-		c, _ := strconv.Atoi(*cursor)
-		if int64(c) >= *response.ResultCount {
-			break
+func keyFuncGroup(obj interface{}) (string, error) {
+	o := obj.(model.Group)
+	return *o.Id, nil
+}
+
+func keyFuncRule(obj interface{}) (string, error) {
+	o := obj.(model.Rule)
+	return *o.Id, nil
+}
+
+func indexFuncSecurityPolicy(obj interface{}) ([]string, error) {
+	o := obj.(model.SecurityPolicy)
+	return filterTag(o.Tags), nil
+}
+
+func indexFuncGroup(obj interface{}) ([]string, error) {
+	o := obj.(model.Group)
+	return filterTag(o.Tags), nil
+}
+
+func indexFuncRule(obj interface{}) ([]string, error) {
+	o := obj.(model.Rule)
+	return filterTag(o.Tags), nil
+}
+
+var filterTag = func(v []model.Tag) []string {
+	res := make([]string, 0, 5)
+	for _, tag := range v {
+		if *tag.Scope == key {
+			res = append(res, *tag.Tag)
 		}
 	}
+	return res
 }
 
-func querySecurityPolicy(service *SecurityPolicyService, wg *sync.WaitGroup, fatalErrors chan error) {
-	defer wg.Done()
-	queryParam := fmt.Sprintf("%s:%s", common.ResourceType, common.ResourceTypeSecurityPolicy) + " AND " + queryTagCondition(service)
-	var cursor *string = nil
-	pageSize := common.PageSize
-	for {
-		response, err := service.NSXClient.QueryClient.List(queryParam, cursor, nil, &pageSize, nil, nil)
-		err = common.TransError(err)
-		if _, ok := err.(util2.PageMaxError); ok == true {
-			common.DecrementPageSize(&pageSize)
-			continue
-		}
-		if err != nil {
-			fatalErrors <- err
-		}
-		for _, g := range response.Results {
-			a, err := Converter.ConvertToGolang(g, model.SecurityPolicyBindingType())
-			if err != nil {
-				for _, e := range err {
-					fatalErrors <- e
-				}
-			}
-			c, _ := a.(model.SecurityPolicy)
-			err2 := service.SecurityPolicyStore.Add(c)
-			if err2 != nil {
-				fatalErrors <- err2
-			}
-		}
-		cursor = response.Cursor
-		if cursor == nil {
-			break
-		}
-		c, _ := strconv.Atoi(*cursor)
-		if int64(c) >= *response.ResultCount {
-			break
+func InitializeStore(service *SecurityPolicyService) {
+	service.Store = make(map[string]cache.Indexer)
+	service.Store[ResourceTypeSecurityPolicy] = cache.NewIndexer(keyFuncSecurityPolicy, cache.Indexers{key: indexFuncSecurityPolicy})
+	service.Store[ResourceTypeGroup] = cache.NewIndexer(keyFuncGroup, cache.Indexers{key: indexFuncGroup})
+	service.Store[ResourceTypeRule] = cache.NewIndexer(keyFuncRule, cache.Indexers{key: indexFuncRule})
+}
+
+type OperateSecurityPolicyStore struct {
+	securityService *SecurityPolicyService
+}
+
+type OperateRuleStore struct {
+	securityService *SecurityPolicyService
+}
+
+type OperateGroupStore struct {
+	securityService *SecurityPolicyService
+}
+
+func (o *OperateSecurityPolicyStore) TransResourceToStore(entity *data.StructValue) error {
+	obj, err := Converter.ConvertToGolang(entity, model.SecurityPolicyBindingType())
+	if err != nil {
+		for _, e := range err {
+			return e
 		}
 	}
+	sp, _ := obj.(model.SecurityPolicy)
+	err2 := o.securityService.Store[ResourceTypeSecurityPolicy].Add(sp)
+	if err2 != nil {
+		return err2
+	}
+	return nil
 }
 
-func queryRule(service *SecurityPolicyService, wg *sync.WaitGroup, fatalErrors chan error) {
-	defer wg.Done()
-	queryParam := fmt.Sprintf("%s:%s", common.ResourceType, common.ResourceTypeRule) + " AND " + queryTagCondition(service)
-	var cursor *string = nil
-	pageSize := common.PageSize
-	for {
-		response, err := service.NSXClient.QueryClient.List(queryParam, cursor, nil, &pageSize, nil, nil)
-		err = common.TransError(err)
-		if _, ok := err.(util2.PageMaxError); ok == true {
-			common.DecrementPageSize(&pageSize)
-			continue
-		}
-		if err != nil {
-			fatalErrors <- err
-		}
-		for _, g := range response.Results {
-			a, err := Converter.ConvertToGolang(g, model.RuleBindingType())
-			if err != nil {
-				for _, e := range err {
-					fatalErrors <- e
-				}
-			}
-			c, _ := a.(model.Rule)
-			err2 := service.RuleStore.Add(c)
-			if err2 != nil {
-				fatalErrors <- err2
-			}
-		}
-		cursor = response.Cursor
-		if cursor == nil {
-			break
-		}
-		c, _ := strconv.Atoi(*cursor)
-		if int64(c) >= *response.ResultCount {
-			break
+func (o *OperateRuleStore) TransResourceToStore(entity *data.StructValue) error {
+	obj, err := Converter.ConvertToGolang(entity, model.RuleBindingType())
+	if err != nil {
+		for _, e := range err {
+			return e
 		}
 	}
+	rule, _ := obj.(model.Rule)
+	err2 := o.securityService.Store[ResourceTypeRule].Add(rule)
+	if err2 != nil {
+		return err2
+	}
+	return nil
 }
 
-func (service *SecurityPolicyService) OperateSecurityStore(sp *model.SecurityPolicy) error {
-	if sp == nil {
+func (o *OperateGroupStore) TransResourceToStore(entity *data.StructValue) error {
+	obj, err := Converter.ConvertToGolang(entity, model.GroupBindingType())
+	if err != nil {
+		for _, e := range err {
+			return e
+		}
+	}
+	group, _ := obj.(model.Group)
+	err2 := o.securityService.Store[ResourceTypeGroup].Add(group)
+	if err2 != nil {
+		return err2
+	}
+	return nil
+}
+
+func (o *OperateSecurityPolicyStore) CRUDResource(i interface{}) error {
+	if i == nil {
 		return nil
 	}
+	sp := i.(*model.SecurityPolicy)
 	if sp.MarkedForDelete != nil && *sp.MarkedForDelete {
-		err := service.SecurityPolicyStore.Delete(*sp) // Pass in the object to be deleted, not the pointer
+		err := o.securityService.Store[ResourceTypeSecurityPolicy].Delete(*sp) // Pass in the object to be deleted, not the pointer
 		log.V(1).Info("delete security policy from store", "securitypolicy", sp)
 		if err != nil {
 			return err
 		}
 	} else {
-		err := service.SecurityPolicyStore.Add(*sp)
+		err := o.securityService.Store[ResourceTypeSecurityPolicy].Add(*sp)
 		log.V(1).Info("add security policy to store", "securitypolicy", sp)
 		if err != nil {
 			return err
@@ -156,16 +135,17 @@ func (service *SecurityPolicyService) OperateSecurityStore(sp *model.SecurityPol
 	return nil
 }
 
-func (service *SecurityPolicyService) OperateRuleStore(sp *model.SecurityPolicy) error {
+func (o *OperateRuleStore) CRUDResource(i interface{}) error {
+	sp := i.(*model.SecurityPolicy)
 	for _, rule := range sp.Rules {
 		if rule.MarkedForDelete != nil && *rule.MarkedForDelete {
-			err := service.RuleStore.Delete(rule)
+			err := o.securityService.Store[ResourceTypeRule].Delete(rule)
 			log.V(1).Info("delete rule from store", "rule", rule)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := service.RuleStore.Add(rule)
+			err := o.securityService.Store[ResourceTypeRule].Add(rule)
 			log.V(1).Info("add rule to store", "rule", rule)
 			if err != nil {
 				return err
@@ -175,16 +155,17 @@ func (service *SecurityPolicyService) OperateRuleStore(sp *model.SecurityPolicy)
 	return nil
 }
 
-func (service *SecurityPolicyService) OperateGroupStore(gs *[]model.Group) error {
+func (o *OperateGroupStore) CRUDResource(i interface{}) error {
+	gs := i.(*[]model.Group)
 	for _, group := range *gs {
 		if group.MarkedForDelete != nil && *group.MarkedForDelete {
-			err := service.GroupStore.Delete(group)
+			err := o.securityService.Store[ResourceTypeGroup].Delete(group)
 			log.V(1).Info("delete group from store", "group", group)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := service.GroupStore.Add(group)
+			err := o.securityService.Store[ResourceTypeGroup].Add(group)
 			log.V(1).Info("add group to store", "group", group)
 			if err != nil {
 				return err
