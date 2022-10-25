@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/vmware-tanzu/nsx-operator/pkg/logger"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -16,12 +18,14 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
+	"github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha2"
 	"github.com/vmware-tanzu/nsx-operator/pkg/config"
+	ippool2 "github.com/vmware-tanzu/nsx-operator/pkg/controllers/ippool"
 	securitypolicycontroller "github.com/vmware-tanzu/nsx-operator/pkg/controllers/securitypolicy"
-	"github.com/vmware-tanzu/nsx-operator/pkg/logger"
 	"github.com/vmware-tanzu/nsx-operator/pkg/metrics"
 	"github.com/vmware-tanzu/nsx-operator/pkg/nsx"
 	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/common"
+	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/ippool"
 	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/securitypolicy"
 )
 
@@ -35,6 +39,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8384", "The address the probe endpoint binds to.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8093", "The address the metrics endpoint binds to.")
 	config.AddFlags()
@@ -64,6 +69,23 @@ func StartSecurityPolicyController(mgr ctrl.Manager, commonService common.Servic
 	}
 	if err := securityReconcile.Start(mgr); err != nil {
 		log.Error(err, "failed to create controller", "controller", "SecurityPolicy")
+		os.Exit(1)
+	}
+}
+
+func StartIPPoolController(mgr ctrl.Manager, commonService common.Service) {
+	ippoolReconcile := &ippool2.Reconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}
+	if ipPoolService, err := ippool.InitializeIPPool(commonService); err != nil {
+		log.Error(err, "failed to initialize ippool commonService", "controller", "IPPool")
+		os.Exit(1)
+	} else {
+		ippoolReconcile.Service = ipPoolService
+	}
+	if err := ippoolReconcile.Start(mgr); err != nil {
+		log.Error(err, "failed to create controller", "controller", "IPPool")
 		os.Exit(1)
 	}
 }
@@ -98,6 +120,9 @@ func main() {
 
 	// Start the security policy controller.
 	StartSecurityPolicyController(mgr, commonService)
+
+	// Start the ip pool controller.
+	StartIPPoolController(mgr, commonService)
 
 	if metrics.AreMetricsExposed(cf) {
 		go updateHealthMetricsPeriodically(nsxClient)

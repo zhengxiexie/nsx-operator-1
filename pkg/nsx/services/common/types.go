@@ -24,6 +24,9 @@ const (
 	TagScopeRuleID               string = "nsx-op/rule_id"
 	TagScopeGroupType            string = "nsx-op/group_type"
 	TagScopeSelectorHash         string = "nsx-op/selector_hash"
+	TagScopeIPPoolCRName         string = "nsx-op/ippool_cr_name"
+	TagScopeIPPoolCRUID          string = "nsx-op/ippool_cr_uid"
+	TagScopeIPSubnetName         string = "nsx-op/ipsubnet_cr_name"
 	TagScopeNCPCluster           string = "ncp/cluster"
 	TagScopeNCPProject           string = "ncp/project"
 	TagScopeNCPVIFProject        string = "ncp/vif_project"
@@ -37,11 +40,13 @@ const (
 )
 
 var (
-	ResourceType               = "resource_type"
-	ResourceTypeSecurityPolicy = "SecurityPolicy"
-	ResourceTypeGroup          = "Group"
-	ResourceTypeRule           = "Rule"
-	ResourceTypeVPC            = "VPC"
+	ResourceType                  = "resource_type"
+	ResourceTypeSecurityPolicy    = "SecurityPolicy"
+	ResourceTypeGroup             = "Group"
+	ResourceTypeRule              = "Rule"
+	ResourceTypeVPC               = "VPC"
+	ResourceTypeIPPool            = "IpAddressPool"
+	ResourceTypeIPPoolBlockSubnet = "IpAddressPoolBlockSubnet"
 )
 
 type Service struct {
@@ -59,4 +64,5 @@ func NewConverter() *bindings.TypeConverter {
 var (
 	String = pointy.String // address of string
 	Int64  = pointy.Int64  // address of int64
+	Bool   = pointy.Bool   // address of bool
 )
