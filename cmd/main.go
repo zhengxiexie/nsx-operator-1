@@ -70,6 +70,17 @@ func StartSecurityPolicyController(mgr ctrl.Manager, commonService common.Servic
 	}
 }
 
+func StartVPCNetworkConfigController(mgr ctrl.Manager) {
+        vpcNetworkReconcile := &vpcnetworkconfigcontroller.VPCNetworkConfigurationReconciler{
+                Client: mgr.GetClient(),
+                Scheme: mgr.GetScheme(),
+        }
+        if err := vpcNetworkReconcile.Start(mgr); err != nil {
+                log.Error(err, "failed to create controller", "controller", "VPCNetworkConfig")
+                os.Exit(1)
+        }
+}
+
 func main() {
 	log.Info("starting NSX Operator")
 
@@ -100,6 +111,7 @@ func main() {
 
 	// Start the security policy controller.
 	StartSecurityPolicyController(mgr, commonService)
+        StartVPCNetworkConfigController(mgr)
 
 	if metrics.AreMetricsExposed(cf) {
 		go updateHealthMetricsPeriodically(nsxClient)
