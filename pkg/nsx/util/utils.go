@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"reflect"
 	"sort"
 	"strconv"
@@ -187,13 +188,13 @@ var (
 	}
 
 	errorTable1 = map[string]NsxError{
-		"409":// http.StatusConflict
+		"409": // http.StatusConflict
 		&StaleRevision{},
-		"412":// http.StatusPreconditionFailed
+		"412": // http.StatusPreconditionFailed
 		&StaleRevision{},
-		"429":// http.statusTooManyRequests
+		"429": // http.statusTooManyRequests
 		&TooManyRequests{},
-		"503":// http.StatusServiceUnavailable
+		"503": // http.StatusServiceUnavailable
 		&ServiceUnavailable{},
 	}
 )
@@ -368,4 +369,33 @@ func castApiError(apiErrorDataValue *data.StructValue) *model.ApiError {
 
 func isEmptyAPIError(apiError model.ApiError) bool {
 	return (apiError.ErrorCode == nil && apiError.ErrorMessage == nil)
+}
+
+func DumpHttpRequest(request *http.Request) {
+	httpRequest, err := httputil.DumpRequest(request, true)
+	if err != nil {
+		log.V(1).Info("dump http request error", "error", err)
+		return
+	}
+	headers := strings.Split(string(httpRequest), "\r\n")
+	marked := []string{"Authorization", "X-Xsrf-Token", "Cookie"}
+	for idx, header := range headers {
+		current := strings.Split(header, ":")
+		for _, item := range marked {
+			if current[0] == item {
+				headers[idx] = current[0] + ": ****"
+			}
+		}
+	}
+	headersString := strings.Join(headers, "\r\n")
+	log.V(1).Info("http request", "header", headersString)
+}
+
+func DumpHttpResponse(response *http.Response) (string, error) {
+	httpResponse, err := httputil.DumpResponse(response, true)
+	if err != nil {
+		return "", err
+	} else {
+		return string(httpResponse), nil
+	}
 }
