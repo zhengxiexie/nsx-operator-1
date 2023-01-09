@@ -14,22 +14,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	v1alpha1 "github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
+	vpcnetwork "github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/vpcnetworkconfig"
+
+	"github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
 )
 
 // VPCNetworkConfigurationReconciler reconciles a VPCNetworkConfiguration object.
 type VPCNetworkConfigurationReconciler struct {
 	client.Client
-	Scheme                     *runtime.Scheme
-	installedVPCNetworkConfigs *VPCNetworkConfigInfoCache
-}
-
-func NewVPCNetworkConfigurationReconciler(client client.Client, scheme *runtime.Scheme) *VPCNetworkConfigurationReconciler {
-	return &VPCNetworkConfigurationReconciler{
-		Client:                     client,
-		Scheme:                     scheme,
-		installedVPCNetworkConfigs: NewVPCNetworkConfigInfoStore(),
-	}
+	Scheme  *runtime.Scheme
+	Service *vpcnetwork.VPCNetworkConfigService
 }
 
 // Reconcile will attempt to ensure that the imported Resource is installed in local cluster as per the
