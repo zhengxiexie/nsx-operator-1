@@ -45,6 +45,7 @@ func CompareResources(existing []Comparable, expected []Comparable) (changed []C
 
 			} else {
 				log.V(1).Info("resource changed", "existing", e2, "expected", e)
+
 			}
 		}
 		changed = append(changed, e)
