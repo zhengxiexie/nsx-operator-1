@@ -34,6 +34,7 @@ func CompareResources(existing []Comparable, expected []Comparable) (changed []C
 	}
 	existingMap := make(map[string]Comparable)
 	for _, e := range existing {
+
 		existingMap[e.Key()] = e
 	}
 
