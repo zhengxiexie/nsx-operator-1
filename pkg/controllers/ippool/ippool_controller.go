@@ -196,9 +196,19 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *Reconciler) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewWebhookManagedBy(mgr).
+		For(&v1alpha2.IPPool{}).
+		Complete()
+}
+
 // Start setup manager and launch GC
 func (r *Reconciler) Start(mgr ctrl.Manager) error {
 	err := r.SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+	err = r.SetupWebhookWithManager(mgr)
 	if err != nil {
 		return err
 	}

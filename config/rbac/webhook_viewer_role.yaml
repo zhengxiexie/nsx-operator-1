@@ -1,0 +1,27 @@
+# permissions for end users to view webhooks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: webhook-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: nsx-operator
+    app.kubernetes.io/part-of: nsx-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: webhook-viewer-role
+rules:
+- apiGroups:
+  - nsx.vmware.com
+  resources:
+  - webhooks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nsx.vmware.com
+  resources:
+  - webhooks/status
+  verbs:
+  - get
