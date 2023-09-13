@@ -47,12 +47,12 @@ func (t *Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 			start := time.Now()
 			ep.wait()
 			waitTime := time.Since(start)
+			util.DumpHttpRequest(r)
 			if resp, resul = t.base().RoundTrip(r); resul != nil {
 				ep.setStatus(DOWN)
 				return handleRoundTripError(resul, ep)
 			}
 			transTime := time.Since(start) - waitTime
-			util.DumpHttpRequest(r)
 			ep.adjustRate(waitTime, resp.StatusCode)
 			var body []byte
 			if resp != nil {
