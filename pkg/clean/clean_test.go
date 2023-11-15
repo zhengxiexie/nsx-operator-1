@@ -1,27 +1,22 @@
-// Delete DLB resources.
-// The size of load balancer service can be, SMALL, MEDIUM, LARGE, XLARGE, or DLB.
-// The first four sizes are realized on Edge node as a
-// centralized load balancer. DLB is realized on each ESXi hypervisor as a distributed load balancer.
-// Previously, this cleanup function was implemented in NCP nsx_policy_cleanup.py.
-// Now, it is re-implemented in nsx-operator pkg/clean/.
 package clean
 
 import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 )
 
-func httpGetOrDelete(method string, url string) (map[string]interface{}, error) {
+func httpGet(url string) (map[string]interface{}, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
 
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -31,11 +26,12 @@ func httpGetOrDelete(method string, url string) (map[string]interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if method == "DELETE" {
-		return nil, nil
-	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println("Failed to close response body")
+		}
+	}(resp.Body)
 
 	var response map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&response)
@@ -45,76 +41,73 @@ func httpGetOrDelete(method string, url string) (map[string]interface{}, error) 
 	return response, nil
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
+func httpDelete(url string) error {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth("admin", "Admin!23Admin")
+
+	_, err = client.Do(req)
+	return err
+}
+
+func checkTagsExist(tags []interface{}) bool {
+	requiredTags := map[string]bool{"ncp/version": false, "ncp/cluster": false}
+
+	for _, tagItem := range tags {
+		if scope, ok := tagItem.(map[string]interface{})["scope"].(string); ok {
+			if _, exists := requiredTags[scope]; exists {
+				requiredTags[scope] = true
+			}
 		}
 	}
-	return false
+
+	for _, exists := range requiredTags {
+		if !exists {
+			return false
+		}
+	}
+	return true
 }
 
 func httpGetDLBServices(url string) ([]string, error) {
-	var dlbServicesPath []string
-
-	resp, err := httpGetOrDelete("GET", url)
+	resp, err := httpGet(url)
 	if err != nil {
-		return dlbServicesPath, err
+		return nil, err
 	}
 
+	var dlbServicesPath []string
 	for _, item := range resp["results"].([]interface{}) {
-		if item.(map[string]interface{})["size"].(string) == "DLB" {
-			ncpVersionTagExist, ncpClusterTagExist := false, false
-			for _, tagItem := range item.(map[string]interface{})["tags"].([]interface{}) {
-				if tagItem.(map[string]interface{})["scope"].(string) == "ncp/version" {
-					ncpVersionTagExist = true
-				}
-				if tagItem.(map[string]interface{})["scope"].(string) == "ncp/cluster" {
-					ncpClusterTagExist = true
-				}
-			}
-			if ncpClusterTagExist && ncpVersionTagExist {
-				// if path not in dlbServicesPath, add it
-				path := item.(map[string]interface{})["path"].(string)
-				if !stringInSlice(path, dlbServicesPath) {
-					dlbServicesPath = append(dlbServicesPath, path)
-				}
-			}
+		if item.(map[string]interface{})["size"].(string) == "DLB" && checkTagsExist(item.(map[string]interface{})["tags"].([]interface{})) {
+			dlbServicesPath = append(dlbServicesPath, item.(map[string]interface{})["path"].(string))
 		}
 	}
 	return dlbServicesPath, nil
 }
 
 func httpGetVirtualServers(url string, dlbServicesPath []string) ([]string, []string, error) {
-	var dlbVirtualServersPath []string
-	var dlbPoolsPath []string
-
-	resp, err := httpGetOrDelete("GET", url)
+	resp, err := httpGet(url)
 	if err != nil {
-		return dlbVirtualServersPath, dlbPoolsPath, err
+		return nil, nil, err
 	}
+
+	dlbServices := make(map[string]bool)
+	for _, path := range dlbServicesPath {
+		dlbServices[path] = true
+	}
+
+	var dlbVirtualServersPath, dlbPoolsPath []string
 	for _, item := range resp["results"].([]interface{}) {
-		lbServicePath := item.(map[string]interface{})["lb_service_path"].(string)
-		if stringInSlice(lbServicePath, dlbServicesPath) {
-			ncpVersionTagExist, ncpClusterTagExist := false, false
-			for _, tagItem := range item.(map[string]interface{})["tags"].([]interface{}) {
-				if tagItem.(map[string]interface{})["scope"].(string) == "ncp/version" {
-					ncpVersionTagExist = true
-				}
-				if tagItem.(map[string]interface{})["scope"].(string) == "ncp/cluster" {
-					ncpClusterTagExist = true
-				}
-			}
-			if ncpClusterTagExist && ncpVersionTagExist {
-				path := item.(map[string]interface{})["path"].(string)
-				if !stringInSlice(path, dlbVirtualServersPath) {
-					dlbVirtualServersPath = append(dlbVirtualServersPath, path)
-				}
-				poolPath := item.(map[string]interface{})["pool_path"].(string)
-				if !stringInSlice(poolPath, dlbPoolsPath) {
-					dlbPoolsPath = append(dlbPoolsPath, poolPath)
-				}
-			}
+		if dlbServices[item.(map[string]interface{})["lb_service_path"].(string)] && checkTagsExist(item.(map[string]interface{})["tags"].([]interface{})) {
+			dlbVirtualServersPath = append(dlbVirtualServersPath, item.(map[string]interface{})["path"].(string))
+			dlbPoolsPath = append(dlbPoolsPath, item.(map[string]interface{})["pool_path"].(string))
 		}
 	}
 	return dlbVirtualServersPath, dlbPoolsPath, nil
@@ -123,22 +116,17 @@ func httpGetVirtualServers(url string, dlbServicesPath []string) ([]string, []st
 func TestCleanDLB(t *testing.T) {
 	url := "https://10.176.208.161:443/policy/api/v1/infra/lb-services/"
 	dlbServicesPath, _ := httpGetDLBServices(url)
-	fmt.Println(dlbServicesPath)
+
 	url = "https://10.176.208.161:443/policy/api/v1/infra/lb-virtual-servers/"
 	dlbVirtualServersPath, dlbPoolsPath, _ := httpGetVirtualServers(url, dlbServicesPath)
-	fmt.Println(dlbVirtualServersPath)
-	fmt.Println(dlbPoolsPath)
 
-	// delete virtual servers of dlb services, then dlb services and dlb pools by sequence
 	allPaths := append(dlbVirtualServersPath, dlbServicesPath...)
 	allPaths = append(allPaths, dlbPoolsPath...)
+	fmt.Println(allPaths)
 	for _, path := range allPaths {
 		url = "https://10.176.208.161:443/policy/api/v1" + path
-		_, err := httpGetOrDelete("DELETE", url)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			log.Info("delete path: " + path)
+		if err := httpDelete(url); err != nil {
+			t.Errorf("Failed to delete path: %s, error: %v", path, err)
 		}
 	}
 }
