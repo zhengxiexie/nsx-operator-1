@@ -60,6 +60,7 @@ func main() {
 	cf.Thumbprint = []string{thumbprint}
 	cf.CaFile = []string{caFile}
 	cf.Cluster = cluster
+	cf.DefaultTimeout = 60
 	logf.SetLogger(logger.ZapLogger(cf))
 
 	err := clean.Clean(cf)
