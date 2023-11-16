@@ -9,6 +9,11 @@ import (
 	"testing"
 )
 
+type (
+	mapInterface = map[string]interface{}
+	mapBool      = map[string]bool
+)
+
 func httpGet(url string) (map[string]interface{}, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -33,7 +38,7 @@ func httpGet(url string) (map[string]interface{}, error) {
 		}
 	}(resp.Body)
 
-	var response map[string]interface{}
+	var response mapInterface
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return nil, err
@@ -59,10 +64,10 @@ func httpDelete(url string) error {
 }
 
 func checkTagsExist(tags []interface{}) bool {
-	requiredTags := map[string]bool{"ncp/version": false, "ncp/cluster": false}
+	requiredTags := mapBool{"ncp/version": false, "ncp/cluster": false}
 
 	for _, tagItem := range tags {
-		if scope, ok := tagItem.(map[string]interface{})["scope"].(string); ok {
+		if scope, ok := tagItem.(mapInterface)["scope"].(string); ok {
 			if _, exists := requiredTags[scope]; exists {
 				requiredTags[scope] = true
 			}
@@ -85,8 +90,8 @@ func httpGetDLBServices(url string) ([]string, error) {
 
 	var dlbServicesPath []string
 	for _, item := range resp["results"].([]interface{}) {
-		if item.(map[string]interface{})["size"].(string) == "DLB" && checkTagsExist(item.(map[string]interface{})["tags"].([]interface{})) {
-			dlbServicesPath = append(dlbServicesPath, item.(map[string]interface{})["path"].(string))
+		if item.(mapInterface)["size"].(string) == "DLB" && checkTagsExist(item.(mapInterface)["tags"].([]interface{})) {
+			dlbServicesPath = append(dlbServicesPath, item.(mapInterface)["path"].(string))
 		}
 	}
 	return dlbServicesPath, nil
@@ -98,16 +103,16 @@ func httpGetVirtualServers(url string, dlbServicesPath []string) ([]string, []st
 		return nil, nil, err
 	}
 
-	dlbServices := make(map[string]bool)
+	dlbServices := make(mapBool)
 	for _, path := range dlbServicesPath {
 		dlbServices[path] = true
 	}
 
 	var dlbVirtualServersPath, dlbPoolsPath []string
 	for _, item := range resp["results"].([]interface{}) {
-		if dlbServices[item.(map[string]interface{})["lb_service_path"].(string)] && checkTagsExist(item.(map[string]interface{})["tags"].([]interface{})) {
-			dlbVirtualServersPath = append(dlbVirtualServersPath, item.(map[string]interface{})["path"].(string))
-			dlbPoolsPath = append(dlbPoolsPath, item.(map[string]interface{})["pool_path"].(string))
+		if dlbServices[item.(mapInterface)["lb_service_path"].(string)] && checkTagsExist(item.(mapInterface)["tags"].([]interface{})) {
+			dlbVirtualServersPath = append(dlbVirtualServersPath, item.(mapInterface)["path"].(string))
+			dlbPoolsPath = append(dlbPoolsPath, item.(mapInterface)["pool_path"].(string))
 		}
 	}
 	return dlbVirtualServersPath, dlbPoolsPath, nil
