@@ -34,8 +34,8 @@ var (
 )
 
 func main() {
-	flag.StringVar(&vcEndpoint, "vc-endpoint", "", "nsx manager ip")
-	flag.StringVar(&vcSsoDomain, "vc-sso-domain", "", "nsx manager ip")
+	flag.StringVar(&vcEndpoint, "vc-endpoint", "", "vc endpoint ip")
+	flag.StringVar(&vcSsoDomain, "vc-sso-domain", "", "vc sso domain")
 	flag.StringVar(&mgrIp, "mgr-ip", "", "nsx manager ip")
 	flag.StringVar(&vcUser, "vc-user", "", "vc username")
 	flag.StringVar(&vcPasswd, "vc-passwd", "", "vc password")

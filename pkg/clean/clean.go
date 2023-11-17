@@ -36,10 +36,14 @@ func Clean(cf *config.NSXOperatorConfig) error {
 		return fmt.Errorf("failed to initialize cleanup service: %w", cleanupService.err)
 	} else {
 		for _, clean := range cleanupService.cleans {
-			if err := clean.Cleanup(); err != nil {
+			if err = clean.Cleanup(); err != nil {
 				return fmt.Errorf("failed to clean up: %w", err)
 			}
 		}
+	}
+	err := CleanDLB(cf)
+	if err != nil {
+		return fmt.Errorf("failed to clean up dlb: %w", err)
 	}
 	log.Info("cleanup NSX resources successfully")
 	return nil

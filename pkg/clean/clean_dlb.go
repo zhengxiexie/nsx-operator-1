@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"testing"
+
+	"github.com/vmware-tanzu/nsx-operator/pkg/config"
 )
 
 type (
@@ -14,18 +15,19 @@ type (
 	mapBool      = map[string]bool
 )
 
-func httpGet(url string) (map[string]interface{}, error) {
+func httpGet(cf *config.NSXOperatorConfig, url string) (map[string]interface{}, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
 
+	log.Info("Getting ", "url", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth("admin", "Admin!23Admin")
+	req.SetBasicAuth(cf.NsxApiUser, cf.NsxApiPassword)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -46,18 +48,19 @@ func httpGet(url string) (map[string]interface{}, error) {
 	return response, nil
 }
 
-func httpDelete(url string) error {
+func httpDelete(cf *config.NSXOperatorConfig, url string) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
 
+	log.Info("Deleting ", "url", url)
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", "Admin!23Admin")
+	req.SetBasicAuth(cf.NsxApiUser, cf.NsxApiPassword)
 
 	_, err = client.Do(req)
 	return err
@@ -82,8 +85,9 @@ func checkTagsExist(tags []interface{}) bool {
 	return true
 }
 
-func httpGetDLBServices(url string) ([]string, error) {
-	resp, err := httpGet(url)
+func httpGetDLBServices(cf *config.NSXOperatorConfig) ([]string, error) {
+	url := "https://" + cf.NsxApiManagers[0] + ":443/policy/api/v1/infra/lb-services/"
+	resp, err := httpGet(cf, url)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +101,9 @@ func httpGetDLBServices(url string) ([]string, error) {
 	return dlbServicesPath, nil
 }
 
-func httpGetVirtualServers(url string, dlbServicesPath []string) ([]string, []string, error) {
-	resp, err := httpGet(url)
+func httpGetVirtualServers(cf *config.NSXOperatorConfig, dlbServicesPath []string) ([]string, []string, error) {
+	url := "https://" + cf.NsxApiManagers[0] + ":443/policy/api/v1/infra/lb-virtual-servers/"
+	resp, err := httpGet(cf, url)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,20 +123,25 @@ func httpGetVirtualServers(url string, dlbServicesPath []string) ([]string, []st
 	return dlbVirtualServersPath, dlbPoolsPath, nil
 }
 
-func TestCleanDLB(t *testing.T) {
-	url := "https://10.176.208.161:443/policy/api/v1/infra/lb-services/"
-	dlbServicesPath, _ := httpGetDLBServices(url)
-
-	url = "https://10.176.208.161:443/policy/api/v1/infra/lb-virtual-servers/"
-	dlbVirtualServersPath, dlbPoolsPath, _ := httpGetVirtualServers(url, dlbServicesPath)
+func CleanDLB(cf *config.NSXOperatorConfig) error {
+	log.Info("Deleting DLB resources started")
+	dlbServicesPath, err := httpGetDLBServices(cf)
+	if err != nil {
+		return err
+	}
+	dlbVirtualServersPath, dlbPoolsPath, err := httpGetVirtualServers(cf, dlbServicesPath)
+	if err != nil {
+		return err
+	}
 
 	allPaths := append(dlbVirtualServersPath, dlbServicesPath...)
 	allPaths = append(allPaths, dlbPoolsPath...)
-	fmt.Println(allPaths)
+	log.Info("Deleting DLB resources", "paths", allPaths)
 	for _, path := range allPaths {
-		url = "https://10.176.208.161:443/policy/api/v1" + path
-		if err := httpDelete(url); err != nil {
-			t.Errorf("Failed to delete path: %s, error: %v", path, err)
+		url := "https://" + cf.NsxApiManagers[0] + ":443/policy/api/v1" + path
+		if err = httpDelete(cf, url); err != nil {
+			return err
 		}
 	}
+	return nil
 }
