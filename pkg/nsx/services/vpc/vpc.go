@@ -140,13 +140,12 @@ func InitializeVPC(service common.Service) (*VPCService, error) {
 		wg.Add(2)
 	}
 	VPCService.VpcStore = &VPCStore{ResourceStore: common.ResourceStore{
-		Indexer:     cache.NewIndexer(keyFunc, cache.Indexers{common.TagScopeVPCCRUID: indexFunc}),
+		Indexer:     cache.NewIndexer(keyFunc, cache.Indexers{}),
 		BindingType: model.VpcBindingType(),
 	}}
 
 	VPCService.IpblockStore = &IPBlockStore{ResourceStore: common.ResourceStore{
 		Indexer: cache.NewIndexer(keyFunc, cache.Indexers{
-			common.TagScopeVPCCRUID: indexFunc,
 			common.IndexKeyPathPath: indexPathFunc}),
 		BindingType: model.IpAddressBlockBindingType(),
 	}}
@@ -260,13 +259,13 @@ func (s *VPCService) DeleteIPBlockInVPC(vpc model.Vpc) error {
 		if err := s.deleteIPBlock(block); err != nil {
 			return err
 		}
-		vpcCRUid := ""
+		nsCRUid := ""
 		for _, tag := range vpc.Tags {
-			if *tag.Scope == common.TagScopeVPCCRUID {
-				vpcCRUid = *tag.Tag
+			if *tag.Scope == common.TagScopeNamespaceUID {
+				nsCRUid = *tag.Tag
 			}
 		}
-		log.V(2).Info("search ip block from store using index and path", "index", common.TagScopeVPCCRUID, "Value", vpcCRUid, "Path", block)
+		log.V(2).Info("search ip block from store using index and path", "index", common.TagScopeNamespaceUID, "Value", nsCRUid, "Path", block)
 		// using index vpc cr id may get multiple ipblocks, add path to filter the correct one
 		ipblock := s.IpblockStore.GetByIndex(common.IndexKeyPathPath, block)
 		if ipblock != nil {
@@ -279,7 +278,8 @@ func (s *VPCService) DeleteIPBlockInVPC(vpc model.Vpc) error {
 	return nil
 }
 
-func (s *VPCService) CreatOrUpdatePrivateIPBlock(obj *v1alpha1.VPC, nc common.VPCNetworkConfigInfo) (map[string]string, error) {
+func (s *VPCService) CreateOrUpdatePrivateIPBlock(obj *v1alpha1.NetworkInfo, nsObj *v1.Namespace, nc common.VPCNetworkConfigInfo) (map[string]string,
+	error) {
 	// if network config contains PrivateIPV4CIDRs section, create private ip block for each cidr
 	path := map[string]string{}
 	if nc.PrivateIPv4CIDRs != nil {
@@ -295,12 +295,12 @@ func (s *VPCService) CreatOrUpdatePrivateIPBlock(obj *v1alpha1.VPC, nc common.VP
 			}
 			// check if private ip block already exist
 			// use cidr_project_ns as search key
-			key := generateIPBlockSearchKey(pCidr, string(obj.UID))
+			key := generateIPBlockSearchKey(pCidr, string(nsObj.UID))
 			log.Info("using key to search from ipblock store", "Key", key)
 			block := s.IpblockStore.GetByKey(key)
 			if block == nil {
 				log.Info("no ip block found in store for cidr", "CIDR", pCidr)
-				block := buildPrivateIpBlock(obj, pCidr, ip.String(), nc.NsxtProject, s.NSXConfig.Cluster)
+				block := buildPrivateIpBlock(obj, nsObj, pCidr, ip.String(), nc.NsxtProject, s.NSXConfig.Cluster)
 				log.Info("creating ip block", "IPBlock", block.Id, "VPC", obj.Name)
 				// can not find private ip block from store, create one
 				_err := s.NSXClient.IPBlockClient.Patch(nc.Org, nc.NsxtProject, *block.Id, block)
@@ -353,6 +353,7 @@ func (s *VPCService) getSharedVPCNamespaceFromNS(ns string) (string, error) {
 	}
 
 	// Retrieve the shared vpc namespace from annotation
+	// The format should be namespace/vpc_name, e.g. kube-system/infra-vpc
 	shared_ns := strings.Split(ncName, "/")[0]
 
 	return shared_ns, nil
@@ -451,13 +452,16 @@ func (s *VPCService) GetAVISubnetInfo(vpc model.Vpc) (string, string, error) {
 	return path, cidr, nil
 }
 
-func (s *VPCService) CreateorUpdateVPC(obj *v1alpha1.VPC) (*model.Vpc, *common.VPCNetworkConfigInfo, error) {
+func (s *VPCService) CreateOrUpdateVPC(obj *v1alpha1.NetworkInfo) (*model.Vpc, *common.VPCNetworkConfigInfo, error) {
 	// check from VPC store if vpc already exist
+	ns := obj.Namespace
 	updateVpc := false
-	existingVPC := s.VpcStore.GetVPCsByNamespace(obj.Namespace)
-	if len(existingVPC) != 0 { // We now consider only one VPC for one namespace
-		updateVpc = true
-		log.Info("VPC already exist, updating NSX VPC object", "VPC", existingVPC[0].Id)
+	nsObj := &v1.Namespace{}
+	sharedVPCName := ""
+	// get name obj
+	if err := s.Client.Get(ctx, types.NamespacedName{Name: obj.Namespace}, nsObj); err != nil {
+		log.Error(err, "unable to fetch namespace", "name", obj.Namespace)
+		return nil, nil, err
 	}
 
 	// read corresponding vpc network config from store
@@ -473,9 +477,44 @@ func (s *VPCService) CreateorUpdateVPC(obj *v1alpha1.VPC) (*model.Vpc, *common.V
 		return nil, nil, errors.New(message)
 	}
 
+	annotations := nsObj.GetAnnotations()
+	vpcName, nameExist := annotations[common.AnnotationVPCName]
+	if nameExist {
+		log.Info("read ns annotation networkInfoName", "VPCNAME", vpcName)
+		res := strings.Split(vpcName, "/")
+		// The format should be namespace/vpc_name
+		if len(res) != 2 {
+			message := fmt.Sprintf("incorrect networkInfoName annotation %s for namespace %s", vpcName, obj.Namespace)
+			return nil, nil, errors.New(message)
+		}
+		if ns != res[0] {
+			log.Info("namespace is using shared vpc, with vpc name anno", "VPCNAME", vpcName, "Namespace", ns)
+			sharedNS := res[0]
+			sharedVPCs := s.VpcStore.GetVPCsByNamespace(sharedNS)
+			for _, vpc := range sharedVPCs {
+				if *vpc.DisplayName == res[1] {
+					return vpc, &nc, nil
+				}
+			}
+			return nil, nil, fmt.Errorf("shared vpc %s not created yet", res[1])
+		} else {
+			// temp: find vmware-system-supervisor-services-vpc has anno nsx.vmware.com/vpc_name: vmware-system-supervisor-services-vpc/vmware-system-supervisor-services
+			// this mislead shared vpc is vmware-system-supervisor-services
+			if res[1] == "infrastructure" {
+				sharedVPCName = res[1]
+			}
+		}
+	}
+
+	existingVPC := s.VpcStore.GetVPCsByNamespace(ns)
+	if len(existingVPC) != 0 { // We now consider only one VPC for one namespace
+		updateVpc = true
+		log.Info("VPC already exist, updating NSX VPC object", "VPC", existingVPC[0].Id)
+	}
+
 	log.Info("read network config from store", "NetworkConfig", ncName)
 
-	paths, err := s.CreatOrUpdatePrivateIPBlock(obj, nc)
+	paths, err := s.CreateOrUpdatePrivateIPBlock(obj, nsObj, nc)
 	if err != nil {
 		log.Error(err, "failed to process private ip blocks, push event back to queue")
 		return nil, nil, err
@@ -491,7 +530,7 @@ func (s *VPCService) CreateorUpdateVPC(obj *v1alpha1.VPC) (*model.Vpc, *common.V
 		nsxVPC = nil
 	}
 
-	createdVpc, err := buildNSXVPC(obj, nc, s.NSXConfig.Cluster, paths, nsxVPC)
+	createdVpc, err := buildNSXVPC(obj, nsObj, nc, s.NSXConfig.Cluster, paths, nsxVPC, sharedVPCName)
 	if err != nil {
 		log.Error(err, "failed to build NSX VPC object")
 		return nil, nil, err
@@ -714,7 +753,7 @@ func (service *VPCService) buildAVIGroupTag(vpcId string) []model.Tag {
 			Tag:   common.String(strings.Join(common.TagValueVersion, ".")),
 		},
 		{
-			Scope: common.String(common.TagScopeVPCCRUID),
+			Scope: common.String(common.TagScopeNamespaceUID), // vpcId is ns uid
 			Tag:   common.String(vpcId),
 		},
 		{

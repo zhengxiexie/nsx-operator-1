@@ -4,6 +4,7 @@ import (
 	"net/netip"
 
 	"github.com/vmware/vsphere-automation-sdk-go/services/nsxt/model"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
 	"github.com/vmware-tanzu/nsx-operator/pkg/nsx/services/common"
@@ -19,28 +20,28 @@ var (
 // using cidr_vpccruid as key so that it could quickly check if ipblocks already created.
 func generateIPBlockKey(block model.IpAddressBlock) string {
 	cidr := block.Cidr
-	vpc_uid := ""
+	ns_uid := ""
 	for _, tag := range block.Tags {
-		if *tag.Scope == common.TagScopeVPCCRUID {
-			vpc_uid = *tag.Tag
+		if *tag.Scope == common.TagScopeNamespaceUID {
+			ns_uid = *tag.Tag
 		}
 	}
-	return *cidr + "_" + vpc_uid
+	return *cidr + "_" + ns_uid
 }
 
-func generateIPBlockSearchKey(cidr string, vpcCRUID string) string {
-	return cidr + "_" + vpcCRUID
+func generateIPBlockSearchKey(cidr string, nsCRUID string) string {
+	return cidr + "_" + nsCRUID
 }
 
-func buildPrivateIpBlock(vpc *v1alpha1.VPC, cidr, ip, project, cluster string) model.IpAddressBlock {
-	suffix := vpc.GetNamespace() + "-" + vpc.Name + "-" + ip
+func buildPrivateIpBlock(networkInfo *v1alpha1.NetworkInfo, nsObj *v1.Namespace, cidr, ip, project, cluster string) model.IpAddressBlock {
+	suffix := networkInfo.GetNamespace() + "-" + ip
 	addr, _ := netip.ParseAddr(ip)
 	ipType := util.If(addr.Is4(), model.IpAddressBlock_IP_ADDRESS_TYPE_IPV4, model.IpAddressBlock_IP_ADDRESS_TYPE_IPV6).(string)
 	blockType := model.IpAddressBlock_VISIBILITY_PRIVATE
 	block := model.IpAddressBlock{
-		DisplayName:   common.String(util.GenerateDisplayName("ipblock", "", suffix, "", cluster)),
-		Id:            common.String(string(vpc.UID) + "_" + ip),
-		Tags:          util.BuildBasicTags(cluster, vpc, ""), // ipblock and vpc can use the same tags
+		DisplayName:   common.String(util.GenerateDisplayName("", "ipblock", suffix, "", cluster)),
+		Id:            common.String(string(nsObj.UID) + "_" + ip),
+		Tags:          util.BuildBasicTags(cluster, networkInfo, nsObj.UID), // ipblock and vpc can use the same tags
 		Cidr:          &cidr,
 		IpAddressType: &ipType,
 		Visibility:    &blockType,
@@ -49,7 +50,10 @@ func buildPrivateIpBlock(vpc *v1alpha1.VPC, cidr, ip, project, cluster string) m
 	return block
 }
 
-func buildNSXVPC(obj *v1alpha1.VPC, nc common.VPCNetworkConfigInfo, cluster string, pathMap map[string]string, nsxVPC *model.Vpc) (*model.Vpc, error) {
+func buildNSXVPC(obj *v1alpha1.NetworkInfo, nsObj *v1.Namespace, nc common.VPCNetworkConfigInfo, cluster string, pathMap map[string]string,
+	nsxVPC *model.Vpc,
+	sharedVPCName string) (*model.Vpc,
+	error) {
 	vpc := &model.Vpc{}
 	if nsxVPC != nil {
 		// for upgrade case, only check public/private ip block size changing
@@ -61,9 +65,12 @@ func buildNSXVPC(obj *v1alpha1.VPC, nc common.VPCNetworkConfigInfo, cluster stri
 		vpc = nsxVPC
 	} else {
 		// for creating vpc case, fill in vpc properties based on networkconfig
-		vpcName := util.GenerateDisplayName(obj.Name, obj.GetNamespace(), cluster, "", "")
+		vpcName := sharedVPCName
+		if sharedVPCName == "" {
+			vpcName = util.GenerateDisplayName("", "vpc", obj.GetNamespace(), "", cluster)
+		}
 		vpc.DisplayName = &vpcName
-		vpc.Id = common.String(string(obj.GetUID()))
+		vpc.Id = common.String(string(nsObj.GetUID()))
 		vpc.DefaultGatewayPath = &nc.DefaultGatewayPath
 		vpc.IpAddressType = &DefaultVPCIPAddressType
 
@@ -74,7 +81,7 @@ func buildNSXVPC(obj *v1alpha1.VPC, nc common.VPCNetworkConfigInfo, cluster stri
 		}
 		vpc.SiteInfos = siteInfos
 		vpc.LoadBalancerVpcEndpoint = &model.LoadBalancerVPCEndpoint{Enabled: &DefaultLoadBalancerVPCEndpointEnabled}
-		vpc.Tags = util.BuildBasicTags(cluster, obj, "")
+		vpc.Tags = util.BuildBasicTags(cluster, obj, nsObj.UID)
 	}
 
 	// update private/public blocks
