@@ -27,11 +27,16 @@ import (
 
 const (
 	defaultTimeout         = 200 * time.Second
+	PolicyAPI              = "policy/api/v1"
 	verifyNoneExistTimeout = 15 * time.Second
 	crdVersion             = "v1alpha1"
 )
 
 type Status int
+
+type (
+	mapInterface = map[string]interface{}
+)
 
 const (
 	Ready Status = iota
@@ -356,6 +361,25 @@ func (data *TestData) getCRProperties(timeout time.Duration, crType, crName, nam
 				value = parts[1]
 				return true, nil
 			}
+		}
+	})
+	if err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func (data *TestData) getCRPropertiesByJson(timeout time.Duration, crType, crName, namespace, key string) (string, error) {
+	value := ""
+	err := wait.PollUntilContextTimeout(context.TODO(), 1*time.Second, timeout, false, func(ctx context.Context) (bool, error) {
+		cmd := fmt.Sprintf("kubectl get %s %s -n %s -o json | jq '%s'", crType, crName, namespace, key)
+		log.Printf("%s", cmd)
+		rc, stdout, _, err := RunCommandOnNode(clusterInfo.masterNodeName, cmd)
+		if err != nil || rc != 0 {
+			return false, fmt.Errorf("error when running the following command `%s` on master Node: %v, %s", cmd, err, stdout)
+		} else {
+			value = stdout
+			return true, nil
 		}
 	})
 	if err != nil {
@@ -723,4 +747,24 @@ func (data *TestData) waitForResourceExistById(namespace string, resourceType st
 
 func (data *TestData) waitForResourceExistOrNot(namespace string, resourceType string, resourceName string, shouldExist bool) error {
 	return data.waitForResourceExist(namespace, resourceType, "display_name", resourceName, shouldExist)
+}
+
+func (data *TestData) waitForResourceExistByPath(path string, shouldExist bool) error {
+	err := wait.PollUntilContextTimeout(context.TODO(), 1*time.Second, defaultTimeout, false, func(ctx context.Context) (bool, error) {
+		exist := true
+		url := PolicyAPI + path
+		resp, err := testData.nsxClient.Client.Cluster.HttpGet(url)
+		if err != nil {
+			return false, err
+		}
+		id, ok := resp["id"].(string)
+		if !ok || id == "" {
+			exist = false
+		}
+		if exist != shouldExist {
+			return false, nil
+		}
+		return true, nil
+	})
+	return err
 }
