@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -217,20 +216,8 @@ func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(err, "failed to build namespace and network config bindings", "Namepspace", ns)
 			return common.ResultRequeueAfter10sec, nil
 		}
-		// read anno "nsx.vmware.com/vpc_name", if ns contains this annotation, it means it will share infra VPC
+		// read anno "nsx.vmware.com/shared_vpc_namespace", if ns contains this annotation, it means it will share infra VPC
 		ncName, ncExist := annotations[types.AnnotationVPCNetworkConfig]
-		vpcName, nameExist := annotations[types.AnnotationVPCName]
-		if nameExist {
-			log.Info("read ns annotation vpcName", "VPCNAME", vpcName)
-			res := strings.Split(vpcName, "/")
-			// The format should be namespace/vpc_name
-			if len(res) != 2 {
-				message := fmt.Sprintf("incorrect vpcName annotation %s for namespace %s", vpcName, ns)
-				r.namespaceError(&ctx, obj, message, nil)
-				// If illegal format, skip handling this event?
-				return common.ResultNormal, nil
-			}
-		}
 
 		// If ns do not have network config name tag, then use default vpc network config name
 		if !ncExist {
