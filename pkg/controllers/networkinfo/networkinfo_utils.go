@@ -51,6 +51,12 @@ func deleteSuccess(r *NetworkInfoReconciler, _ *context.Context, o *v1alpha1.Net
 }
 
 func setNetworkInfoVPCStatus(ctx *context.Context, networkInfo *v1alpha1.NetworkInfo, client client.Client, createdVPC *v1alpha1.VPCState) {
+	// if createdVPC is empty, remove the VPC from networkInfo
+	if reflect.DeepEqual(*createdVPC, v1alpha1.VPCState{}) {
+		networkInfo.VPCs = []v1alpha1.VPCState{}
+		client.Update(*ctx, networkInfo)
+		return
+	}
 	existingVPC := &v1alpha1.VPCState{}
 	if len(networkInfo.VPCs) > 0 {
 		existingVPC = &networkInfo.VPCs[0]
