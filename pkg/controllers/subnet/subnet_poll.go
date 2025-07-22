@@ -181,14 +181,29 @@ func (r *SubnetReconciler) hasSubnetSpecChanged(originalSpec, newSpec *v1alpha1.
 }
 
 func (r *SubnetReconciler) clearSubnetAddresses(obj client.Object) {
-	subnet := obj.(*v1alpha1.Subnet)
-	subnet.Status.NetworkAddresses = subnet.Status.NetworkAddresses[:0]
-	subnet.Status.GatewayAddresses = subnet.Status.GatewayAddresses[:0]
-	subnet.Status.DHCPServerAddresses = subnet.Status.DHCPServerAddresses[:0]
-	if err := r.Client.Status().Update(context.TODO(), subnet); err != nil {
-		log.Error(err, "Failed to update Subnet status", "Name", subnet.Name, "Namespace", subnet.Namespace)
+	if obj == nil {
+		log.Error(nil, "Cannot clear addresses for nil Subnet object")
+		return
+	}
+
+	subnet, ok := obj.(*v1alpha1.Subnet)
+	if !ok {
+		log.Error(nil, "Object is not a Subnet", "Type", fmt.Sprintf("%T", obj))
+		return
+	}
+
+	// Clear addresses in the original subnet
+	subnet.Status.NetworkAddresses = []string{}
+	subnet.Status.GatewayAddresses = []string{}
+	subnet.Status.DHCPServerAddresses = []string{}
+
+	// Create a copy for the client update
+	subnetCopy := subnet.DeepCopy()
+
+	if err := r.Client.Status().Update(context.TODO(), subnetCopy); err != nil {
+		log.Error(err, "Failed to update Subnet status", "Name", subnetCopy.Name, "Namespace", subnetCopy.Namespace)
 	} else {
-		log.Info("Cleared Subnet addresses", "Name", subnet.Name, "Namespace", subnet.Namespace)
+		log.Info("Cleared Subnet addresses", "Name", subnetCopy.Name, "Namespace", subnetCopy.Namespace)
 	}
 }
 

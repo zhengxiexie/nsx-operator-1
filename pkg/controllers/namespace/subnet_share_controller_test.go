@@ -760,6 +760,7 @@ func TestSyncSharedSubnets(t *testing.T) {
 		existingSubnets []client.Object
 		vpcNetConfig    *v1alpha1.VPCNetworkConfiguration
 		expectedError   bool
+		expectedErrMsg  string
 		setupMocks      func(r *NamespaceReconciler) *gomonkey.Patches
 	}{
 		{
@@ -793,6 +794,92 @@ func TestSyncSharedSubnets(t *testing.T) {
 				return patches
 			},
 		},
+		{
+			name:            "Error getting existing shared subnet CRs",
+			existingSubnets: []client.Object{},
+			vpcNetConfig: &v1alpha1.VPCNetworkConfiguration{
+				Spec: v1alpha1.VPCNetworkConfigurationSpec{
+					Subnets: []string{"/orgs/default/projects/proj-1/vpcs/vpc-1/subnets/subnet-1"},
+				},
+			},
+			expectedError:  true,
+			expectedErrMsg: "failed to get existing shared subnet CRs",
+			setupMocks: func(r *NamespaceReconciler) *gomonkey.Patches {
+				// Mock getExistingSharedSubnetCRs to return an error
+				return gomonkey.ApplyPrivateMethod(reflect.TypeOf(r), "getExistingSharedSubnetCRs",
+					func(_ *NamespaceReconciler, _ context.Context, _ string) (map[string]*v1alpha1.Subnet, error) {
+						return nil, fmt.Errorf("failed to get existing shared subnet CRs")
+					})
+			},
+		},
+		{
+			name:            "Error processing new shared subnets",
+			existingSubnets: []client.Object{},
+			vpcNetConfig: &v1alpha1.VPCNetworkConfiguration{
+				Spec: v1alpha1.VPCNetworkConfigurationSpec{
+					Subnets: []string{"/orgs/default/projects/proj-1/vpcs/vpc-1/subnets/subnet-1"},
+				},
+			},
+			expectedError:  true,
+			expectedErrMsg: "failed to process new shared subnets",
+			setupMocks: func(r *NamespaceReconciler) *gomonkey.Patches {
+				// Mock getExistingSharedSubnetCRs
+				patches := gomonkey.ApplyPrivateMethod(reflect.TypeOf(r), "getExistingSharedSubnetCRs",
+					func(_ *NamespaceReconciler, _ context.Context, _ string) (map[string]*v1alpha1.Subnet, error) {
+						return map[string]*v1alpha1.Subnet{}, nil
+					})
+
+				// Mock processNewSharedSubnets to return an error
+				patches.ApplyPrivateMethod(reflect.TypeOf(r), "processNewSharedSubnets",
+					func(_ *NamespaceReconciler, _ context.Context, _ string, _ *v1alpha1.VPCNetworkConfiguration, _ map[string]*v1alpha1.Subnet) (map[string]*v1alpha1.Subnet, error) {
+						return nil, fmt.Errorf("failed to process new shared subnets")
+					})
+
+				return patches
+			},
+		},
+		{
+			name:            "Error deleting unused shared subnets",
+			existingSubnets: []client.Object{},
+			vpcNetConfig: &v1alpha1.VPCNetworkConfiguration{
+				Spec: v1alpha1.VPCNetworkConfigurationSpec{
+					Subnets: []string{"/orgs/default/projects/proj-1/vpcs/vpc-1/subnets/subnet-1"},
+				},
+			},
+			expectedError:  true,
+			expectedErrMsg: "failed to delete unused shared subnets",
+			setupMocks: func(r *NamespaceReconciler) *gomonkey.Patches {
+				// Mock getExistingSharedSubnetCRs
+				patches := gomonkey.ApplyPrivateMethod(reflect.TypeOf(r), "getExistingSharedSubnetCRs",
+					func(_ *NamespaceReconciler, _ context.Context, _ string) (map[string]*v1alpha1.Subnet, error) {
+						return map[string]*v1alpha1.Subnet{}, nil
+					})
+
+				// Mock processNewSharedSubnets
+				patches.ApplyPrivateMethod(reflect.TypeOf(r), "processNewSharedSubnets",
+					func(_ *NamespaceReconciler, _ context.Context, _ string, _ *v1alpha1.VPCNetworkConfiguration, _ map[string]*v1alpha1.Subnet) (map[string]*v1alpha1.Subnet, error) {
+						return map[string]*v1alpha1.Subnet{
+							"proj-1:vpc-1:subnet-1": {
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      "subnet-1",
+									Namespace: "test-ns",
+									Annotations: map[string]string{
+										servicecommon.AnnotationAssociatedResource: "proj-1:vpc-1:subnet-1",
+									},
+								},
+							},
+						}, nil
+					})
+
+				// Mock deleteUnusedSharedSubnets to return an error
+				patches.ApplyPrivateMethod(reflect.TypeOf(r), "deleteUnusedSharedSubnets",
+					func(_ *NamespaceReconciler, _ context.Context, _ string, _ map[string]*v1alpha1.Subnet) error {
+						return fmt.Errorf("failed to delete unused shared subnets")
+					})
+
+				return patches
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -812,6 +899,9 @@ func TestSyncSharedSubnets(t *testing.T) {
 			// Check the result
 			if tt.expectedError {
 				assert.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
 			} else {
 				assert.NoError(t, err)
 			}

@@ -101,17 +101,17 @@ func (v *SubnetValidator) Handle(ctx context.Context, req admission.Request) adm
 		}
 
 		// Shared Subnet can only be deleted by NSX Operator
-		if (common.IsSharedSubnet(oldSubnet) || common.IsSharedSubnet(subnet)) && req.UserInfo.Username != NSXOperatorSA {
-			return admission.Denied(fmt.Sprintf("Shared Subnet %s/%s can only be deleted by NSX Operator", subnet.Namespace, subnet.Name))
+		if common.IsSharedSubnet(oldSubnet) && req.UserInfo.Username != NSXOperatorSA {
+			return admission.Denied(fmt.Sprintf("Shared Subnet %s/%s can only be deleted by NSX Operator", oldSubnet.Namespace, oldSubnet.Name))
 		}
 
 		if req.UserInfo.Username != NSXOperatorSA {
-			hasSubnetPort, err := v.checkSubnetPort(ctx, subnet.Namespace, subnet.Name)
+			hasSubnetPort, err := v.checkSubnetPort(ctx, oldSubnet.Namespace, oldSubnet.Name)
 			if err != nil {
 				return admission.Errored(http.StatusBadRequest, err)
 			}
 			if hasSubnetPort {
-				return admission.Denied(fmt.Sprintf("Subnet %s/%s with stale SubnetPorts cannot be deleted", subnet.Namespace, subnet.Name))
+				return admission.Denied(fmt.Sprintf("Subnet %s/%s with stale SubnetPorts cannot be deleted", oldSubnet.Namespace, oldSubnet.Name))
 			}
 		}
 	}
