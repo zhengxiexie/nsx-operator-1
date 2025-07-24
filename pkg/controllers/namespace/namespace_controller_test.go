@@ -43,7 +43,11 @@ func createNameSpaceReconciler(objs []client.Object) *NamespaceReconciler {
 	// Create a fake client builder
 	clientBuilder := fake.NewClientBuilder().WithScheme(newScheme).WithObjects(objs...)
 
+	// Create a separate client builder for APIReader
+	apiReaderBuilder := fake.NewClientBuilder().WithScheme(newScheme).WithObjects(objs...)
+
 	fakeClient := clientBuilder.Build()
+	fakeAPIReader := apiReaderBuilder.Build()
 
 	nsxConfig := &config.NSXOperatorConfig{
 		NsxConfig: &config.NsxConfig{
@@ -70,6 +74,7 @@ func createNameSpaceReconciler(objs []client.Object) *NamespaceReconciler {
 
 	nsReconciler := &NamespaceReconciler{
 		Client:        fakeClient,
+		APIReader:     fakeAPIReader,
 		Scheme:        newScheme,
 		VPCService:    service,
 		SubnetService: subnetService,
@@ -269,6 +274,7 @@ func TestNamespaceReconciler_Reconcile(t *testing.T) {
 
 func TestNamespaceReconciler_StartController(t *testing.T) {
 	fakeClient := fake.NewClientBuilder().WithObjects().Build()
+	fakeAPIReader := fake.NewClientBuilder().WithObjects().Build()
 	vpcService := &vpc.VPCService{
 		Service: common.Service{
 			Client: fakeClient,
@@ -279,7 +285,7 @@ func TestNamespaceReconciler_StartController(t *testing.T) {
 			Client: fakeClient,
 		},
 	}
-	mockMgr := &MockManager{scheme: runtime.NewScheme()}
+	mockMgr := &MockManager{scheme: runtime.NewScheme(), client: fakeClient, apiReader: fakeAPIReader}
 	patches := gomonkey.ApplyFunc((*NamespaceReconciler).setupWithManager, func(r *NamespaceReconciler, mgr manager.Manager) error {
 		return nil
 	})
@@ -575,6 +581,8 @@ func TestCreateNetworkInfoCR(t *testing.T) {
 						return apierrors.NewAlreadyExists(v1alpha1.Resource("networkinfos"), obj.GetName())
 					},
 				}
+				// Also update the APIReader to use the same custom client
+				r.APIReader = customClient
 			}
 
 			// Create a namespace object
@@ -615,12 +623,17 @@ func TestCreateNetworkInfoCR(t *testing.T) {
 
 type MockManager struct {
 	ctrl.Manager
-	client client.Client
-	scheme *runtime.Scheme
+	client    client.Client
+	apiReader client.Reader
+	scheme    *runtime.Scheme
 }
 
 func (m *MockManager) GetClient() client.Client {
 	return m.client
+}
+
+func (m *MockManager) GetAPIReader() client.Reader {
+	return m.apiReader
 }
 
 func (m *MockManager) GetScheme() *runtime.Scheme {
