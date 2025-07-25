@@ -91,7 +91,6 @@ func TestGetDefaultNetworkConfigName(t *testing.T) {
 			Annotations: map[string]string{common.AnnotationDefaultNetworkConfig: "true"},
 		},
 	}
-	r := createNameSpaceReconciler(nil)
 	tests := []struct {
 		name       string
 		exist      bool
@@ -104,12 +103,14 @@ func TestGetDefaultNetworkConfigName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			r := createNameSpaceReconciler(nil)
 			patch := gomonkey.ApplyMethod(reflect.TypeOf(r.VPCService), "GetDefaultNetworkConfig", func(_ *vpc.VPCService) (*v1alpha1.VPCNetworkConfiguration, error) {
 				if !tt.exist {
 					return tt.nc, fmt.Errorf("not found")
 				}
 				return tt.nc, nil
 			})
+			defer patch.Reset()
 			name, err := r.getDefaultNetworkConfigName()
 			assert.Equal(t, tt.expectName, name)
 			if name == "" {
@@ -117,7 +118,6 @@ func TestGetDefaultNetworkConfigName(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 			}
-			patch.Reset()
 		})
 	}
 }
@@ -254,8 +254,8 @@ func TestNamespaceReconciler_Reconcile(t *testing.T) {
 			}
 			r := createNameSpaceReconciler(objs)
 
-			if tc.patches(r) != nil {
-				patches := tc.patches(r)
+			patches := tc.patches(r)
+			if patches != nil {
 				defer patches.Reset()
 			}
 
