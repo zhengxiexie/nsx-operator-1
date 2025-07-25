@@ -978,8 +978,12 @@ func TestDeleteAllSharedSubnets(t *testing.T) {
 			// Create a reconciler with the necessary services
 			r := createTestNamespaceReconciler(tt.existingSubnets)
 
-			patches := tt.setupMocks(r)
-			defer patches.Reset()
+			if tt.setupMocks != nil {
+				patches := tt.setupMocks(r)
+				if patches != nil {
+					defer patches.Reset()
+				}
+			}
 
 			// Call the function being tested
 			err := r.deleteAllSharedSubnets(context.Background(), "test-ns")
@@ -1194,8 +1198,12 @@ func TestCreateSharedSubnetCR(t *testing.T) {
 			})
 
 			// Setup mocks
-			patches := tt.setupMocks(r)
-			defer patches.Reset()
+			if tt.setupMocks != nil {
+				patches := tt.setupMocks(r)
+				if patches != nil {
+					defer patches.Reset()
+				}
+			}
 
 			// Call the function being tested
 			err := r.createSharedSubnetCR(context.Background(), "test-ns", tt.sharedSubnetPath)
