@@ -23,6 +23,7 @@ import (
 )
 
 func TestJwtcache_NewJWTCache(t *testing.T) {
+	t.Parallel()
 	tesClient := &TESClient{}
 	freshInterval := time.Second
 	cache := NewJWTCache(tesClient, freshInterval)
@@ -34,6 +35,7 @@ func TestJwtcache_NewJWTCache(t *testing.T) {
 }
 
 func TestJwtcache_GetJWT(t *testing.T) {
+	t.Parallel()
 	tesClient := &TESClient{}
 	freshInterval := 10 * time.Second
 	token, _ := createToken("sectoid")
@@ -64,6 +66,7 @@ func TestJwtcache_GetJWT(t *testing.T) {
 }
 
 func TestJwtcache_GetJWTFailed(t *testing.T) {
+	t.Parallel()
 	opts := zap.Options{
 		Development: true,
 	}
@@ -117,6 +120,7 @@ func createToken(user string) (string, error) {
 }
 
 func TestJwtcache_GetJWTExpire(t *testing.T) {
+	t.Parallel()
 	token1, _ := createToken("sectoid")
 	cache := &JWTCache{}
 	_, err := cache.getJWTExpire(token1)

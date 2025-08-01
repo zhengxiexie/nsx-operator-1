@@ -18,6 +18,7 @@ import (
 )
 
 func TestEnqueueRequestForBindingMap(t *testing.T) {
+	t.Parallel()
 	myQueue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[reconcile.Request]())
 	defer myQueue.ShutDown()
 
@@ -90,6 +91,7 @@ func TestEnqueueRequestForBindingMap(t *testing.T) {
 }
 
 func TestPredicateFuncsBindingMap(t *testing.T) {
+	t.Parallel()
 	readyBM := &v1alpha1.SubnetConnectionBindingMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "bm1",
@@ -241,6 +243,7 @@ func TestPredicateFuncsBindingMap(t *testing.T) {
 }
 
 func TestIsObjectUpdateToReady(t *testing.T) {
+	t.Parallel()
 	unreadyConditions := []v1alpha1.Condition{
 		{
 			Status: corev1.ConditionFalse,

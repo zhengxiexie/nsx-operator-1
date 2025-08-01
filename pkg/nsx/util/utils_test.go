@@ -28,6 +28,7 @@ import (
 )
 
 func TestHttpErrortoNSXError(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	testdatas := []ErrorDetail{
 		{404, 202, []int{}, []string{}, ""},
@@ -59,6 +60,7 @@ func TestHttpErrortoNSXError(t *testing.T) {
 }
 
 func TestInitErrorFromResponse(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	result := `{
 		"failover_mode" : "NON_PREEMPTIVE",
@@ -115,6 +117,7 @@ func TestInitErrorFromResponse(t *testing.T) {
 }
 
 func TestShouldGroundPoint(t *testing.T) {
+	t.Parallel()
 	err := CreateServiceClusterUnavailable("127.0.0.1")
 	assert.False(t, ShouldGroundPoint(err), "It's not a ground point error")
 
@@ -123,6 +126,7 @@ func TestShouldGroundPoint(t *testing.T) {
 }
 
 func TestShouldRetry(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	err := CreateServiceClusterUnavailable("127.0.0.1")
 	assert.False(ShouldRetry(err), "It's not a retry error")
@@ -132,6 +136,7 @@ func TestShouldRetry(t *testing.T) {
 }
 
 func TestShouldRegenerate(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	err := CreateServiceClusterUnavailable("127.0.0.1")
 	assert.False(ShouldRegenerate(err), "It's not a regenerate error")

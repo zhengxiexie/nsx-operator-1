@@ -9,6 +9,7 @@ import (
 )
 
 func TestCompareContainerApplicationInstance(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name           string
 		pre            interface{}
@@ -95,6 +96,7 @@ func TestCompareContainerApplicationInstance(t *testing.T) {
 }
 
 func TestIsIPChanged(t *testing.T) {
+	t.Parallel()
 	type testCase struct {
 		name     string
 		pre      containerinventory.ContainerApplicationInstance
@@ -184,6 +186,7 @@ func TestIsIPChanged(t *testing.T) {
 }
 
 func TestCompareNetworkPolicy(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name           string
 		pre            interface{}
@@ -269,6 +272,7 @@ func TestCompareNetworkPolicy(t *testing.T) {
 	}
 }
 func TestCompareContainerApplication(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name           string
 		pre            interface{}

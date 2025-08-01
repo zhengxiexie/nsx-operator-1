@@ -12,11 +12,13 @@ import (
 )
 
 func TestTESClient_NewTESClient(t *testing.T) {
+	t.Parallel()
 	_, err := NewTESClient("10.0.0.1", 433, "vsphere.local", "admin", "admin", []byte{}, true, "https")
 	assert.Equal(t, err, nil)
 }
 
 func TestTESClient_ExchangeJWT(t *testing.T) {
+	t.Parallel()
 	tesClient := &TESClient{}
 	tesClient.VCClient = &VCClient{}
 	tesClient.VCClient.url = &url.URL{Scheme: "https", Host: "127.0.0.1"}

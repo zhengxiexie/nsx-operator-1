@@ -86,6 +86,7 @@ var (
 )
 
 func TestGetCRNameBySubnetConnectionBindingMap(t *testing.T) {
+	t.Parallel()
 	svc := mockService()
 	crName := svc.GetSubnetConnectionBindingMapCRName(bindingMap1)
 	require.Equal(t, "binding1", crName)
@@ -100,6 +101,7 @@ func TestGetCRNameBySubnetConnectionBindingMap(t *testing.T) {
 }
 
 func TestGetSubnetConnectionBindingMapCRsBySubnet(t *testing.T) {
+	t.Parallel()
 	svc := mockService()
 	svc.BindingStore = SetupStore()
 
@@ -137,6 +139,7 @@ func TestGetSubnetConnectionBindingMapCRsBySubnet(t *testing.T) {
 }
 
 func TestListSubnetConnectionBindingMapCRUIDsInStore(t *testing.T) {
+	t.Parallel()
 	svc := mockService()
 	svc.BindingStore = SetupStore()
 
@@ -160,6 +163,7 @@ func TestListSubnetConnectionBindingMapCRUIDsInStore(t *testing.T) {
 }
 
 func TestInitializeService(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	fakeQueryClient := search_mocks.NewMockQueryClient(ctrl)
 	commonService := common.Service{
@@ -358,6 +362,7 @@ func TestCreateOrUpdateSubnetConnectionBindingMap(t *testing.T) {
 }
 
 func TestDeleteMultiSubnetConnectionBindingMapsByCRs(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mockOrgRootClient := orgroot_mocks.NewMockOrgRootClient(ctrl)
 
@@ -444,6 +449,7 @@ func TestDeleteMultiSubnetConnectionBindingMapsByCRs(t *testing.T) {
 }
 
 func TestDeleteSubnetConnectionBindingMaps(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mockOrgRootClient := orgroot_mocks.NewMockOrgRootClient(ctrl)
 

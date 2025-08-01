@@ -35,6 +35,7 @@ var e2eNetworkInfoNamespaceShare0 = fmt.Sprintf("shared-vpc-ns-0-%s", getRandomS
 var e2eNetworkInfoNamespaceShare1 = fmt.Sprintf("shared-vpc-ns-1-%s", getRandomString())
 
 func TestNetworkInfo(t *testing.T) {
+	t.Parallel()
 	deleteVPCNetworkConfiguration(t, testCustomizedNetworkConfigName)
 	defer t.Cleanup(
 		func() {

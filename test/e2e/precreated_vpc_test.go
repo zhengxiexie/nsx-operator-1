@@ -40,6 +40,7 @@ var (
 )
 
 func TestPreCreatedVPC(t *testing.T) {
+	t.Parallel()
 	orgID, projectID, vpcID := setupVPC(t)
 	nsName := fmt.Sprintf("test-prevpc-%s", getRandomString())
 	projectPath := fmt.Sprintf(projectPathFormat, orgID, projectID)

@@ -9,6 +9,7 @@ import (
 )
 
 func Test_indexFunc(t *testing.T) {
+	t.Parallel()
 	mId, mTag, mScope := "11111", "11111", "nsx-op/nsx_service_account_uid"
 	ccp := model.ClusterControlPlane{
 		Id:   &mId,
@@ -45,6 +46,7 @@ func Test_indexFunc(t *testing.T) {
 }
 
 func Test_keyFunc(t *testing.T) {
+	t.Parallel()
 	Id := "11111"
 	ccp := model.ClusterControlPlane{Id: &Id}
 	pi := mpmodel.PrincipalIdentity{Name: &Id}

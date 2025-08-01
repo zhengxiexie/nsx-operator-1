@@ -14,6 +14,7 @@ import (
 )
 
 func TestIPAddressAllocationStore_CRUDResource(t *testing.T) {
+	t.Parallel()
 	ipAddressAllocationCacheIndexer := cache.NewIndexer(keyFunc, cache.Indexers{common.TagScopeIPAddressAllocationCRUID: indexByIPAddressAllocation})
 	resourceStore := common.ResourceStore{
 		Indexer:     ipAddressAllocationCacheIndexer,
@@ -38,6 +39,7 @@ func TestIPAddressAllocationStore_CRUDResource(t *testing.T) {
 }
 
 func TestIPAddressAllocationStore_GetByUID(t *testing.T) {
+	t.Parallel()
 	p := &model.VpcIpAddressAllocation{Id: String("1"), DisplayName: String("1"),
 		Tags: []model.Tag{{Scope: String(common.TagScopeIPAddressAllocationCRUID),
 			Tag: String("1")}}}
@@ -91,6 +93,7 @@ func TestIPAddressAllocationStore_GetByUID(t *testing.T) {
 }
 
 func Test_indexFunc(t *testing.T) {
+	t.Parallel()
 	mId, mTag, mScope := "11111", "11111", common.TagScopeIPAddressAllocationCRUID
 	m := &model.VpcIpAddressAllocation{
 		Id:   &mId,
@@ -125,6 +128,7 @@ func Test_indexFunc(t *testing.T) {
 }
 
 func Test_keyFunc(t *testing.T) {
+	t.Parallel()
 	Id := "11111"
 	g := &model.VpcIpAddressAllocation{Id: &Id}
 	t.Run("KeyFuncVpcIpAddressAllocation", func(t *testing.T) {

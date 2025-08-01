@@ -8,6 +8,7 @@ import (
 )
 
 func Test_subnetPortIndexPodNamespace(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj interface{}
 	}
@@ -52,6 +53,7 @@ func Test_subnetPortIndexPodNamespace(t *testing.T) {
 }
 
 func Test_subnetPortIndexNamespace(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj interface{}
 	}
@@ -96,6 +98,7 @@ func Test_subnetPortIndexNamespace(t *testing.T) {
 }
 
 func Test_subnetPortIndexBySubnetID(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj interface{}
 	}
@@ -134,6 +137,7 @@ func Test_subnetPortIndexBySubnetID(t *testing.T) {
 }
 
 func Test_subnetPortIndexByPodUID(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj interface{}
 	}
@@ -178,6 +182,7 @@ func Test_subnetPortIndexByPodUID(t *testing.T) {
 }
 
 func Test_subnetPortIndexByCRUID(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj interface{}
 	}

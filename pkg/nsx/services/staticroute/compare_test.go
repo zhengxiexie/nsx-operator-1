@@ -9,6 +9,7 @@ import (
 )
 
 func TestCompareStaticRoute(t *testing.T) {
+	t.Parallel()
 	service := &StaticRouteService{}
 
 	oldStaticRoute := &model.StaticRoutes{

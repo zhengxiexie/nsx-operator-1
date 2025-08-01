@@ -20,6 +20,7 @@ import (
 )
 
 func TestSubnetValidator_Handle(t *testing.T) {
+	t.Parallel()
 	mockCtl := gomock.NewController(t)
 	k8sClient := mockClient.NewMockClient(mockCtl)
 	defer mockCtl.Finish()

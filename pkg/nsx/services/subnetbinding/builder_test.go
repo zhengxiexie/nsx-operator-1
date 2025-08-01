@@ -88,6 +88,7 @@ var (
 )
 
 func TestBuildSubnetBindings(t *testing.T) {
+	t.Parallel()
 	service := mockService()
 	parentSubnetPaths := []string{parentSubnetPath1, parentSubnetPath2}
 	bindingMaps := service.buildSubnetBindings(binding1, parentSubnetPaths)
@@ -99,6 +100,7 @@ func TestBuildSubnetBindings(t *testing.T) {
 }
 
 func TestBuildSubnetConnectionBindingMapCR(t *testing.T) {
+	t.Parallel()
 	expCR := &v1alpha1.SubnetConnectionBindingMap{
 		ObjectMeta: v1.ObjectMeta{
 			UID:       types.UID("uuid-binding1"),

@@ -16,6 +16,7 @@ import (
 )
 
 func TestConvertMPTagsToTags(t *testing.T) {
+	t.Parallel()
 	scope, tag := "scope1", "tag1"
 	type args struct {
 		mpTags []mpmodel.Tag
@@ -56,6 +57,7 @@ func TestConvertMPTagsToTags(t *testing.T) {
 }
 
 func TestConvertTagsToMPTags(t *testing.T) {
+	t.Parallel()
 	scope, tag := "scope1", "tag1"
 	type args struct {
 		tags []model.Tag
@@ -96,6 +98,7 @@ func TestConvertTagsToMPTags(t *testing.T) {
 }
 
 func TestQueryTagCondition(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		resourceType string
 		cluster      string
@@ -124,6 +127,7 @@ func TestQueryTagCondition(t *testing.T) {
 }
 
 func TestParseVPCResourcePath(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		nsxResourcePath string
 	}
@@ -202,6 +206,7 @@ func TestParseVPCResourcePath(t *testing.T) {
 }
 
 func TestIsDefaultNetworkConfigCR(t *testing.T) {
+	t.Parallel()
 	testCRD1 := v1alpha1.VPCNetworkConfiguration{}
 	testCRD1.Name = "test-1"
 	testCRD2 := v1alpha1.VPCNetworkConfiguration{
@@ -226,6 +231,7 @@ func TestIsDefaultNetworkConfigCR(t *testing.T) {
 }
 
 func TestNsxProjectPathToId(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name      string
 		path      string
@@ -251,6 +257,7 @@ func TestNsxProjectPathToId(t *testing.T) {
 }
 
 func TestExtractSubnetPath(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name              string
 		sharedSubnetPath  string
@@ -294,6 +301,7 @@ func TestExtractSubnetPath(t *testing.T) {
 }
 
 func TestGetSubnetPathFromAssociatedResource(t *testing.T) {
+	t.Parallel()
 	path, err := GetSubnetPathFromAssociatedResource("project-1:ns-1:subnet-1")
 	assert.Nil(t, err)
 	assert.Equal(t, "/orgs/default/projects/project-1/vpcs/ns-1/subnets/subnet-1", path)
@@ -303,6 +311,7 @@ func TestGetSubnetPathFromAssociatedResource(t *testing.T) {
 }
 
 func TestConvertSubnetPathToAssociatedResource(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name              string
 		sharedSubnetPath  string

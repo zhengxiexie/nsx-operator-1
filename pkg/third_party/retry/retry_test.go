@@ -12,6 +12,7 @@ import (
 )
 
 func TestDoAllFailed(t *testing.T) {
+	t.Parallel()
 	var retrySum uint
 	err := Do(
 		func() error { return errors.New("test") },
@@ -36,6 +37,7 @@ func TestDoAllFailed(t *testing.T) {
 }
 
 func TestDoFirstOk(t *testing.T) {
+	t.Parallel()
 	var retrySum uint
 	err := Do(
 		func() error { return nil },
@@ -46,6 +48,7 @@ func TestDoFirstOk(t *testing.T) {
 }
 
 func TestRetryIf(t *testing.T) {
+	t.Parallel()
 	var retryCount uint
 	err := Do(
 		func() error {
@@ -72,6 +75,7 @@ func TestRetryIf(t *testing.T) {
 }
 
 func TestDefaultSleep(t *testing.T) {
+	t.Parallel()
 	start := time.Now()
 	err := Do(
 		func() error { return errors.New("test") },
@@ -83,6 +87,7 @@ func TestDefaultSleep(t *testing.T) {
 }
 
 func TestFixedSleep(t *testing.T) {
+	t.Parallel()
 	start := time.Now()
 	err := Do(
 		func() error { return errors.New("test") },
@@ -95,6 +100,7 @@ func TestFixedSleep(t *testing.T) {
 }
 
 func TestLastErrorOnly(t *testing.T) {
+	t.Parallel()
 	var retrySum uint
 	err := Do(
 		func() error { return fmt.Errorf("%d", retrySum) },
@@ -107,6 +113,7 @@ func TestLastErrorOnly(t *testing.T) {
 }
 
 func TestUnrecoverableError(t *testing.T) {
+	t.Parallel()
 	attempts := 0
 	expectedErr := errors.New("error")
 	err := Do(
@@ -122,6 +129,7 @@ func TestUnrecoverableError(t *testing.T) {
 }
 
 func TestCombineFixedDelays(t *testing.T) {
+	t.Parallel()
 	start := time.Now()
 	err := Do(
 		func() error { return errors.New("test") },
@@ -135,6 +143,7 @@ func TestCombineFixedDelays(t *testing.T) {
 }
 
 func TestRandomDelay(t *testing.T) {
+	t.Parallel()
 	start := time.Now()
 	err := Do(
 		func() error { return errors.New("test") },
@@ -149,6 +158,7 @@ func TestRandomDelay(t *testing.T) {
 }
 
 func TestMaxDelay(t *testing.T) {
+	t.Parallel()
 	if os.Getenv("OS") == "macos-latest" {
 		t.Skip("Skipping testing in MacOS GitHub actions - too slow, duration is wrong")
 	}
@@ -167,6 +177,7 @@ func TestMaxDelay(t *testing.T) {
 }
 
 func TestBackOffDelay(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		label         string
 		delay         time.Duration
@@ -211,6 +222,7 @@ func TestBackOffDelay(t *testing.T) {
 }
 
 func TestExponentDelay(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	config := Config{
 		delay:    100 * time.Millisecond,
@@ -241,6 +253,7 @@ func TestExponentDelay(t *testing.T) {
 }
 
 func TestCombineDelay(t *testing.T) {
+	t.Parallel()
 	f := func(d time.Duration) DelayTypeFunc {
 		return func(_ uint, _ error, _ *Config) time.Duration {
 			return d
@@ -295,6 +308,7 @@ func TestCombineDelay(t *testing.T) {
 }
 
 func TestContext(t *testing.T) {
+	t.Parallel()
 	t.Run("cancel before", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()

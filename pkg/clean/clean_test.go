@@ -30,61 +30,77 @@ var (
 )
 
 func TestClean_ValidationFailed(t *testing.T) {
+	cfCopy := *cf // Copy to minimize shared state
+	cfCopy.NsxConfig = &config.NsxConfig{NsxApiManagers: []string{"10.0.0.1"}}
 	ctx := context.Background()
 	log := logr.Discard()
 	debug := false
 	logLevel := 0
-	patches := gomonkey.ApplyMethod(reflect.TypeOf(cf.NsxConfig), "ValidateConfigFromCmd", func(_ *config.NsxConfig) error {
-		return errors.New("validation failed")
-	})
 
-	defer patches.Reset()
+	patch := func(cfg *config.NsxConfig) error {
+		patches := gomonkey.ApplyMethod(reflect.TypeOf(cfg), "ValidateConfigFromCmd", func(_ *config.NsxConfig) error {
+			return errors.New("validation failed")
+		})
+		defer patches.Reset()
+		return Clean(ctx, &cfCopy, &log, debug, logLevel)
+	}
 
-	err := Clean(ctx, cf, &log, debug, logLevel)
+	err := patch(cfCopy.NsxConfig)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
 }
 
 func TestClean_GetClientFailed(t *testing.T) {
+	cfCopy := *cf
+	cfCopy.NsxConfig = &config.NsxConfig{NsxApiManagers: []string{"10.0.0.1"}}
 	ctx := context.Background()
 
 	log := logr.Discard()
 	debug := false
 	logLevel := 0
 
-	patches := gomonkey.ApplyMethod(reflect.TypeOf(cf.NsxConfig), "ValidateConfigFromCmd", func(_ *config.NsxConfig) error {
-		return nil
-	})
-	defer patches.Reset()
-	patches.ApplyFunc(nsx.GetClient, func(_ *config.NSXOperatorConfig) *nsx.Client {
-		return nil
-	})
+	patch := func(cfg *config.NsxConfig) error {
+		patches := gomonkey.ApplyMethod(reflect.TypeOf(cfg), "ValidateConfigFromCmd", func(_ *config.NsxConfig) error {
+			return nil
+		})
+		defer patches.Reset()
+		patches.ApplyFunc(nsx.GetClient, func(_ *config.NSXOperatorConfig) *nsx.Client {
+			return nil
+		})
 
-	err := Clean(ctx, cf, &log, debug, logLevel)
+		return Clean(ctx, &cfCopy, &log, debug, logLevel)
+	}
+
+	err := patch(cfCopy.NsxConfig)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get nsx client")
 }
 
 func TestClean_InitError(t *testing.T) {
+	cfCopy := *cf
+	cfCopy.NsxConfig = &config.NsxConfig{NsxApiManagers: []string{"10.0.0.1"}}
 	ctx := context.Background()
 
 	log := logr.Discard()
 	debug := false
 	logLevel := 0
 
-	patches := gomonkey.ApplyMethod(reflect.TypeOf(cf.NsxConfig), "ValidateConfigFromCmd", func(_ *config.NsxConfig) error {
-		return nil
-	})
-	defer patches.Reset()
-	patches.ApplyFunc(nsx.GetClient, func(_ *config.NSXOperatorConfig) *nsx.Client {
-		return &nsx.Client{}
-	})
+	patch := func(cfg *config.NsxConfig) error {
+		patches := gomonkey.ApplyMethod(reflect.TypeOf(cfg), "ValidateConfigFromCmd", func(_ *config.NsxConfig) error {
+			return nil
+		})
+		defer patches.Reset()
+		patches.ApplyFunc(nsx.GetClient, func(_ *config.NSXOperatorConfig) *nsx.Client {
+			return &nsx.Client{}
+		})
+		patches.ApplyFunc(InitializeCleanupService, func(_ *config.NSXOperatorConfig, _ *nsx.Client, _ *logr.Logger) (*CleanupService, error) {
+			return nil, errors.New("init cleanup service failed")
+		})
 
-	patches.ApplyFunc(InitializeCleanupService, func(_ *config.NSXOperatorConfig, _ *nsx.Client, _ *logr.Logger) (*CleanupService, error) {
-		return nil, errors.New("init cleanup service failed")
-	})
+		return Clean(ctx, &cfCopy, &log, debug, logLevel)
+	}
 
-	err := Clean(ctx, cf, &log, debug, logLevel)
+	err := patch(cfCopy.NsxConfig)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "init cleanup service failed")
 }

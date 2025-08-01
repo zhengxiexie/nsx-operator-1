@@ -12,6 +12,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		apiManagers           string
 		username              string

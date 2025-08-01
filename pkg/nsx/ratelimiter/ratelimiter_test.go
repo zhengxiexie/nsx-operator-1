@@ -12,6 +12,7 @@ import (
 )
 
 func TestAdjustRate(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 
 	max := 10
@@ -44,6 +45,7 @@ func TestAdjustRate(t *testing.T) {
 }
 
 func TestWait(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	max := 100
 	limiter := NewAIMDRateLimiter(max, 0.1)
@@ -77,6 +79,7 @@ func TestWait(t *testing.T) {
 }
 
 func TestRateLimiter_NewFixRateLimiter(t *testing.T) {
+	t.Parallel()
 	limiter := NewFixRateLimiter(120)
 	assert.Equal(t, limiter.rate(), MAXRATELIMIT)
 
@@ -91,6 +94,7 @@ func TestRateLimiter_NewFixRateLimiter(t *testing.T) {
 }
 
 func TestRateLimiter_NewAIMDRateLimiter(t *testing.T) {
+	t.Parallel()
 	limiter := NewAIMDRateLimiter(120, 1.0)
 	assert.Equal(t, limiter.rate(), 1)
 
@@ -105,6 +109,7 @@ func TestRateLimiter_NewAIMDRateLimiter(t *testing.T) {
 }
 
 func TestRateLimiter_FixRateLimiterWait(t *testing.T) {
+	t.Parallel()
 	// disable rate limiter
 	limiter := NewFixRateLimiter(0)
 	before := time.Now()

@@ -7,6 +7,7 @@ import (
 )
 
 func TestIsLicensed(t *testing.T) {
+	t.Parallel()
 	licenseMap[FeatureContainer] = true
 	assert.True(t, IsLicensed(FeatureContainer))
 
@@ -15,6 +16,7 @@ func TestIsLicensed(t *testing.T) {
 }
 
 func TestUpdateLicense(t *testing.T) {
+	t.Parallel()
 	UpdateLicense(FeatureDFW, true)
 	assert.True(t, licenseMap[FeatureDFW])
 
@@ -23,6 +25,7 @@ func TestUpdateLicense(t *testing.T) {
 }
 
 func TestSearchLicense(t *testing.T) {
+	t.Parallel()
 	licenses := &NsxLicense{
 		Results: []struct {
 			FeatureName string `json:"feature_name"`
@@ -93,6 +96,8 @@ func TestSearchLicense(t *testing.T) {
 }
 
 func TestUpdateFeatureLicense(t *testing.T) {
+
+	t.Parallel()
 
 	// Normal case
 	licenses := &NsxLicense{

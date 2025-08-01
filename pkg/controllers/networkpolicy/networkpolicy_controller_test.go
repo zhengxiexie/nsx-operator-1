@@ -31,6 +31,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -81,6 +82,12 @@ func (m *MockManager) Add(runnable manager.Runnable) error {
 
 func (m *MockManager) Start(context.Context) error {
 	return nil
+}
+
+func (m *MockManager) GetControllerOptions() ctrlconfig.Controller {
+	return ctrlconfig.Controller{
+		MaxConcurrentReconciles: 1,
+	}
 }
 
 func fakeService() *securitypolicy.SecurityPolicyService {

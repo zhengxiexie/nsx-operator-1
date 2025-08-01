@@ -72,6 +72,7 @@ func createVPCNetworkConfigurationHandler(objs []client.Object) *VPCNetworkConfi
 }
 
 func TestVPCNetworkConfigurationHandler_Create(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name             string
 		vpcNetworkConfig *v1alpha1.VPCNetworkConfiguration
@@ -100,6 +101,7 @@ func TestVPCNetworkConfigurationHandler_Create(t *testing.T) {
 }
 
 func TestVPCNetworkConfigurationHandler_Delete(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name             string
 		vpcNetworkConfig *v1alpha1.VPCNetworkConfiguration
@@ -122,6 +124,7 @@ func TestVPCNetworkConfigurationHandler_Delete(t *testing.T) {
 }
 
 func TestVPCNetworkConfigurationHandler_Update(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name                string
 		vpcNetworkConfigOld *v1alpha1.VPCNetworkConfiguration
@@ -191,6 +194,7 @@ func TestVPCNetworkConfigurationHandler_Update(t *testing.T) {
 }
 
 func TestVPCNetworkConfigurationHandler_Generic(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name             string
 		vpcNetworkConfig *v1alpha1.VPCNetworkConfiguration

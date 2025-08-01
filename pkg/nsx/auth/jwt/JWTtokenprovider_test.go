@@ -11,6 +11,7 @@ import (
 )
 
 func TestJWTTokenprovider_NewTokenProvider(t *testing.T) {
+	t.Parallel()
 	_, err := NewTokenProvider("127.0.0.1", 443, "vsphere.local", "", "", []byte{}, false, "https")
 	_, ok := err.(*url.Error)
 	assert.Equal(t, ok, false)
@@ -18,6 +19,7 @@ func TestJWTTokenprovider_NewTokenProvider(t *testing.T) {
 }
 
 func TestJWTTokenprovider_HeaderValue(t *testing.T) {
+	t.Parallel()
 	provider := &JWTTokenProvider{}
 	value := provider.HeaderValue("hello")
 	assert.Equal(t, value, "Bearer hello")

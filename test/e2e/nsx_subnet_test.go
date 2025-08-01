@@ -54,6 +54,7 @@ func verifySubnetSetCR(subnetSet string) bool {
 }
 
 func TestSubnetSet(t *testing.T) {
+	t.Parallel()
 	setupTest(t, subnetTestNamespace)
 
 	targetNs := &corev1.Namespace{

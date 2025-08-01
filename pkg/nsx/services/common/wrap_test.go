@@ -11,6 +11,7 @@ import (
 )
 
 func TestService_WrapAttachment(t *testing.T) {
+	t.Parallel()
 	service := &Service{}
 	attachmentId := "attachment-id"
 	markedForDelete := true
@@ -52,6 +53,7 @@ func TestService_WrapAttachment(t *testing.T) {
 }
 
 func TestService_WrapLBS(t *testing.T) {
+	t.Parallel()
 	service := &Service{}
 	lbsId := "lbs-id"
 	markedForDelete := true
@@ -91,6 +93,7 @@ func TestService_WrapLBS(t *testing.T) {
 }
 
 func TestService_WrapVPC(t *testing.T) {
+	t.Parallel()
 	service := &Service{}
 	vpcId := "vpc-id"
 	markedForDelete := true
@@ -130,6 +133,7 @@ func TestService_WrapVPC(t *testing.T) {
 }
 
 func TestService_WrapInfra(t *testing.T) {
+	t.Parallel()
 	service := &Service{}
 	children := []*data.StructValue{
 		{},
@@ -174,6 +178,7 @@ func TestService_WrapInfra(t *testing.T) {
 }
 
 func TestService_WrapOrgRoot(t *testing.T) {
+	t.Parallel()
 	service := &Service{}
 	children := []*data.StructValue{
 		{},
@@ -218,6 +223,7 @@ func TestService_WrapOrgRoot(t *testing.T) {
 }
 
 func TestService_WrapOrg(t *testing.T) {
+	t.Parallel()
 	service := &Service{}
 	org := "org-id"
 

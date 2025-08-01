@@ -14,6 +14,7 @@ import (
 )
 
 func TestConfig_VCConfig(t *testing.T) {
+	t.Parallel()
 	vcConfig := &VCConfig{}
 	expect := errors.New("invalid field " + "VcEndPoint")
 	err := vcConfig.validate()
@@ -46,6 +47,7 @@ func TestConfig_VCConfig(t *testing.T) {
 }
 
 func TestConfig_CoeConfig(t *testing.T) {
+	t.Parallel()
 	coeConfig := &CoeConfig{}
 	expect := errors.New("invalid field " + "Cluster")
 	err := coeConfig.validate()
@@ -58,6 +60,7 @@ func TestConfig_CoeConfig(t *testing.T) {
 }
 
 func TestConfig_NsxConfig(t *testing.T) {
+	t.Parallel()
 	nsxConfig := &NsxConfig{}
 	expect := errors.New("invalid field " + "NsxApiManagers")
 	err := nsxConfig.validate(false)
@@ -107,6 +110,7 @@ func TestConfig_NewNSXOperatorConfigFromFile(t *testing.T) {
 }
 
 func TestConfig_GetTokenProvider(t *testing.T) {
+	t.Parallel()
 	vcConfig := &VCConfig{}
 	vcConfig.VCEndPoint = "127.0.0.1"
 	vcConfig.SsoDomain = "vsphere@local"
@@ -133,6 +137,7 @@ func TestConfig_GetHA(t *testing.T) {
 }
 
 func TestNSXOperatorConfig_GetCACert(t *testing.T) {
+	t.Parallel()
 	caFile, _ := os.CreateTemp("", "config_test")
 	caFile.Write([]byte("dummy file"))
 	caFile.Close()
@@ -188,6 +193,7 @@ func TestNSXOperatorConfig_GetCACert(t *testing.T) {
 }
 
 func TestNsxConfig_GetServiceSize(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		ServiceSize string
 	}

@@ -12,6 +12,7 @@ import (
 )
 
 func Test_KeyFunc(t *testing.T) {
+	t.Parallel()
 	id := "test_id"
 	node := model.HostTransportNode{UniqueId: &id}
 	t.Run("1", func(t *testing.T) {
@@ -23,6 +24,7 @@ func Test_KeyFunc(t *testing.T) {
 }
 
 func TestSubnetStore_Apply(t *testing.T) {
+	t.Parallel()
 	resourceStore := common.ResourceStore{
 		Indexer: cache.NewIndexer(
 			keyFunc,

@@ -14,6 +14,7 @@ import (
 )
 
 func Test_T1ToVPC(t *testing.T) {
+	t.Parallel()
 	// Initialize input SecurityPolicy
 	input := &v1alpha1.SecurityPolicy{
 		Spec: v1alpha1.SecurityPolicySpec{
@@ -34,6 +35,7 @@ func Test_T1ToVPC(t *testing.T) {
 }
 
 func Test_VPCToT1(t *testing.T) {
+	t.Parallel()
 	// Initialize input SecurityPolicy
 	input := &crdv1alpha1.SecurityPolicy{
 		Spec: crdv1alpha1.SecurityPolicySpec{

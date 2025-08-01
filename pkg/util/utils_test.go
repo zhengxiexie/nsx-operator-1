@@ -24,10 +24,12 @@ import (
 )
 
 func TestSha1(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, Sha1("name"), "6ae999552a0d2dca14d62e2bc8b764d377b1dd6c")
 }
 
 func TestNormalizeName(t *testing.T) {
+	t.Parallel()
 	shortName := strings.Repeat("a", 256)
 	assert.Equal(t, NormalizeLabelValue(shortName, truncateLabelHash), shortName)
 	longName := strings.Repeat("a", 257)
@@ -35,6 +37,7 @@ func TestNormalizeName(t *testing.T) {
 }
 
 func TestNormalizeLabelKey(t *testing.T) {
+	t.Parallel()
 	shortKey := strings.Repeat("a", 128)
 	assert.Equal(t, NormalizeLabelKey(shortKey, truncateLabelHash), shortKey)
 	longKey := strings.Repeat("a", 129) + "/def"
@@ -42,6 +45,7 @@ func TestNormalizeLabelKey(t *testing.T) {
 }
 
 func TestNormalizeLabels(t *testing.T) {
+	t.Parallel()
 	shortKey := strings.Repeat("a", 128)
 	longKey := strings.Repeat("a", 129) + "/def"
 	longValue := strings.Repeat("v", 257)
@@ -77,6 +81,7 @@ func TestNormalizeLabels(t *testing.T) {
 }
 
 func TestUtil_IsNsInSystemNamespace(t *testing.T) {
+	t.Parallel()
 	client := fake.NewClientBuilder().Build()
 	ctx := context.TODO()
 	dummyNs := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "dummy"}}
@@ -113,6 +118,7 @@ func TestUtil_IsNsInSystemNamespace(t *testing.T) {
 }
 
 func Test_CheckPodHasNamedPort(t *testing.T) {
+	t.Parallel()
 	pod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pod",
@@ -160,6 +166,7 @@ func Test_CheckPodHasNamedPort(t *testing.T) {
 }
 
 func TestToUpper(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj interface{}
 	}
@@ -178,6 +185,7 @@ func TestToUpper(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		s   []string
 		str string
@@ -199,6 +207,7 @@ func TestContains(t *testing.T) {
 }
 
 func TestRemoveDuplicateStr(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		strSlice []string
 	}
@@ -217,6 +226,7 @@ func TestRemoveDuplicateStr(t *testing.T) {
 }
 
 func TestCalculateSubnetSize(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		mask int
 	}
@@ -235,6 +245,7 @@ func TestCalculateSubnetSize(t *testing.T) {
 }
 
 func TestNormalizeId(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		name string
 	}
@@ -275,6 +286,7 @@ func TestNormalizeId(t *testing.T) {
 }
 
 func TestGenerateID(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		res_id string
 		prefix string
@@ -347,6 +359,7 @@ func TestGenerateID(t *testing.T) {
 }
 
 func TestGenerateDisplayName(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		res_name string
 		prefix   string
@@ -422,6 +435,7 @@ func TestGenerateDisplayName(t *testing.T) {
 }
 
 func TestGenerateTruncName(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		limit    int
 		res_name string
@@ -514,6 +528,7 @@ func TestGenerateTruncName(t *testing.T) {
 }
 
 func TestGenerateIDByObject(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name  string
 		obj   metav1.Object
@@ -539,6 +554,7 @@ func TestGenerateIDByObject(t *testing.T) {
 }
 
 func TestGenerateIDByObjectWithSuffix(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		obj    metav1.Object
@@ -569,6 +585,7 @@ func TestGenerateIDByObjectWithSuffix(t *testing.T) {
 }
 
 func TestConnectStrings(t *testing.T) {
+	t.Parallel()
 	string1 := "aa"
 	string2 := "bb"
 	connectString := connectStrings(common.ConnectorUnderline, string1, string2)
@@ -593,6 +610,7 @@ func TestConnectStrings(t *testing.T) {
 }
 
 func TestNewSha1(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "chl6tk4k3f8cb0c1lfpdlfjtsyfuess", Sha1WithCustomizedCharset("name"))
 	assert.Equal(t, "eqbb380p8jcm2zjaxwy0dmvb4hyevkw", Sha1WithCustomizedCharset("namee"))
 
@@ -610,6 +628,7 @@ func TestNewSha1(t *testing.T) {
 }
 
 func TestCollisionWithHashCharset(t *testing.T) {
+	t.Parallel()
 	hashLength := 5
 	newUUID, err := uuid.NewRandom()
 	require.NoError(t, err)
@@ -621,6 +640,7 @@ func TestCollisionWithHashCharset(t *testing.T) {
 }
 
 func TestGetClusterUUID(t *testing.T) {
+	t.Parallel()
 	// Save original clusterUUID and restore after test to avoid side effects
 	origClusterUUID := clusterUUID
 	defer func() { clusterUUID = origClusterUUID }()

@@ -66,6 +66,7 @@ var (
 )
 
 func TestStore(t *testing.T) {
+	t.Parallel()
 	store := SetupStore()
 	bm1 := &model.SubnetConnectionBindingMap{
 		Id:             String("binding1-parent1"),

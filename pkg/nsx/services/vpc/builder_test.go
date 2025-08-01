@@ -15,6 +15,7 @@ import (
 )
 
 func Test_buildNSXLBS(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		obj                  *v1alpha1.NetworkInfo
 		nsObj                *v1.Namespace
@@ -79,6 +80,7 @@ func Test_buildNSXLBS(t *testing.T) {
 }
 
 func TestBuildNSXVPC(t *testing.T) {
+	t.Parallel()
 	nc := v1alpha1.VPCNetworkConfiguration{
 		Spec: v1alpha1.VPCNetworkConfigurationSpec{
 			PrivateIPs: []string{"192.168.1.0/24"},
@@ -279,6 +281,7 @@ func TestBuildNSXVPC(t *testing.T) {
 }
 
 func Test_combineVPCIDAndLBSID(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		vpcID string
 		lbsID string
@@ -307,6 +310,7 @@ func Test_combineVPCIDAndLBSID(t *testing.T) {
 }
 
 func Test_generateLBSKey(t *testing.T) {
+	t.Parallel()
 	emptyPath := ""
 	emptyVpcPath := "/fake/path/empty/vpc/"
 	okPath := "/fake/path/vpc/fake-vpc"

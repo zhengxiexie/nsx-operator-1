@@ -24,6 +24,7 @@ var (
 )
 
 func TestRoundTripRetry(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	result := `{"module_name":"common-services","error_message":"The credentials were incorrect or the account specified has been locked","error_code":98}`
 	healthresult := `{
@@ -70,6 +71,7 @@ func TestRoundTripRetry(t *testing.T) {
 }
 
 func TestSelectEndpoint(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 	a := "127.0.0.1, 127.0.0.2, 127.0.0.3"
 	config := NewConfig(a, "admin", "passw0rd", []string{}, 10, 3, 20, 20, true, true, true, ratelimiter.AIMD, nil, nil, []string{})
@@ -110,6 +112,7 @@ func TestSelectEndpoint(t *testing.T) {
 }
 
 func TestTransport_RoundTrip(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		Base      http.RoundTripper
 		endpoints []*Endpoint
@@ -147,6 +150,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 }
 
 func Test_handleRoundTripError(t *testing.T) {
+	t.Parallel()
 	a := "127.0.0.1, 127.0.0.2, 127.0.0.3"
 	config := NewConfig(a, "admin", "passw0rd", []string{}, 10, 3, 20, 20, true, true, true, ratelimiter.AIMD, nil, nil, []string{})
 	cluster := &Cluster{config: &Config{}}
@@ -165,6 +169,7 @@ func Test_handleRoundTripError(t *testing.T) {
 }
 
 func TestTransport_base(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		Base      http.RoundTripper
 		endpoints []*Endpoint
@@ -192,6 +197,7 @@ func TestTransport_base(t *testing.T) {
 }
 
 func TestTransport_selectEndpoint(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		Base      http.RoundTripper
 		endpoints []*Endpoint

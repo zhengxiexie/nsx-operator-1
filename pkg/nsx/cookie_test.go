@@ -13,6 +13,7 @@ import (
 )
 
 func TestNewJar(t *testing.T) {
+	t.Parallel()
 	j := Jar{}
 	j.jar = make(map[string][]*http.Cookie)
 	tests := []struct {
@@ -31,6 +32,7 @@ func TestNewJar(t *testing.T) {
 }
 
 func TestJar_Cookies(t *testing.T) {
+	t.Parallel()
 	url2 := &url.URL{Host: "test"}
 	j := NewJar()
 	j.SetCookies(url2, []*http.Cookie{})

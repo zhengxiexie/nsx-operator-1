@@ -20,6 +20,7 @@ import (
 )
 
 func TestHandleEndpoint(t *testing.T) {
+	t.Parallel()
 	cfg := &config.NSXOperatorConfig{NsxConfig: &config.NsxConfig{}}
 	queue := MockObjectQueue[any]{}
 	t.Run("NormalEndpoint", func(t *testing.T) {

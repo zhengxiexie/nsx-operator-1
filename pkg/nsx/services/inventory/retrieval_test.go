@@ -14,6 +14,7 @@ import (
 )
 
 func TestGetPodIDsFromEndpoint(t *testing.T) {
+	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -56,6 +57,7 @@ func TestGetPodIDsFromEndpoint(t *testing.T) {
 }
 
 func TestGetPodByUID(t *testing.T) {
+	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -94,6 +96,7 @@ func TestGetPodByUID(t *testing.T) {
 }
 
 func TestGetServicesUIDByPodUID(t *testing.T) {
+	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

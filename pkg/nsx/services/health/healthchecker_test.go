@@ -13,6 +13,7 @@ import (
 
 // TestHealthCheckHandlers tests the HealthCheckHandlers struct
 func TestHealthCheckHandlers(t *testing.T) {
+	t.Parallel()
 	t.Run("AddHandler and GetHandlers", func(t *testing.T) {
 		handlers := NewHealthCheckHandlers()
 
@@ -32,6 +33,7 @@ func TestHealthCheckHandlers(t *testing.T) {
 
 // TestClusterHealthChecker tests the ClusterHealthChecker struct
 func TestClusterHealthChecker(t *testing.T) {
+	t.Parallel()
 	t.Run("CheckClusterHealth - Multiple Checks", func(t *testing.T) {
 		// Create a test health checker with custom handlers
 		handlers := NewHealthCheckHandlers()
@@ -82,6 +84,7 @@ func TestClusterHealthChecker(t *testing.T) {
 
 // TestSystemHealthReporter tests the SystemHealthReporter struct
 func TestSystemHealthReporter(t *testing.T) {
+	t.Parallel()
 	t.Run("extractIntervalFromResponse", func(t *testing.T) {
 		// Create a test implementation of SystemHealthReporter
 		reporter := &SystemHealthReporter{

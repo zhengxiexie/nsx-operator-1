@@ -19,6 +19,7 @@ var (
 )
 
 func Test_KeyFunc(t *testing.T) {
+	t.Parallel()
 	vpc := model.Vpc{Path: &fakeVpcPath}
 	vpcProfile := model.VpcConnectivityProfile{Path: &fakeVpcProfilePath}
 	ipBlock := model.IpAddressBlock{Path: &fakeIpBlockPath}
@@ -74,6 +75,7 @@ func Test_KeyFunc(t *testing.T) {
 }
 
 func TestVPCConnectivityProfileStore_Apply(t *testing.T) {
+	t.Parallel()
 	vpcConnectivityProfileStore := &VPCConnectivityProfileStore{ResourceStore: common.ResourceStore{
 		Indexer:     cache.NewIndexer(keyFunc, cache.Indexers{}),
 		BindingType: model.VpcConnectivityProfileBindingType(),
@@ -106,6 +108,7 @@ func TestVPCConnectivityProfileStore_Apply(t *testing.T) {
 }
 
 func TestIPBlockStore_Apply(t *testing.T) {
+	t.Parallel()
 	ipBlockStore := &IPBlockStore{ResourceStore: common.ResourceStore{
 		Indexer:     cache.NewIndexer(keyFunc, cache.Indexers{}),
 		BindingType: model.IpAddressBlockBindingType(),
@@ -137,6 +140,7 @@ func TestIPBlockStore_Apply(t *testing.T) {
 	}
 }
 func TestVpcAttachmentStore_Apply(t *testing.T) {
+	t.Parallel()
 	vpcAttachmentStore := NewVpcAttachmentStore()
 
 	attachment1 := model.VpcAttachment{
@@ -167,6 +171,7 @@ func TestVpcAttachmentStore_Apply(t *testing.T) {
 	}
 }
 func TestVpcAttachmentStore_GetByKey(t *testing.T) {
+	t.Parallel()
 	vpcAttachmentStore := NewVpcAttachmentStore()
 
 	attachment := model.VpcAttachment{
@@ -185,6 +190,7 @@ func TestVpcAttachmentStore_GetByKey(t *testing.T) {
 }
 
 func TestVpcAttachmentStore_GetByVpcPath(t *testing.T) {
+	t.Parallel()
 	vpcAttachmentStore := NewVpcAttachmentStore()
 
 	attachment1 := model.VpcAttachment{

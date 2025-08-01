@@ -2,6 +2,7 @@ package subnetset
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -257,8 +259,37 @@ func TestGetNSXSubnetBindingsBySubnet(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			// Create properly initialized subnet service
+			subnetService := &subnet.SubnetService{
+				SubnetStore: &subnet.SubnetStore{
+					ResourceStore: common.ResourceStore{
+						Indexer: cache.NewIndexer(func(obj interface{}) (string, error) {
+							switch v := obj.(type) {
+							case *model.VpcSubnet:
+								return *v.Id, nil
+							default:
+								return "", errors.New("keyFunc doesn't support unknown type")
+							}
+						}, cache.Indexers{
+							common.TagScopeSubnetSetCRUID: func(obj interface{}) ([]string, error) {
+								switch o := obj.(type) {
+								case *model.VpcSubnet:
+									for _, tag := range o.Tags {
+										if *tag.Scope == common.TagScopeSubnetSetCRUID {
+											return []string{*tag.Tag}, nil
+										}
+									}
+									return []string{}, nil
+								default:
+									return nil, errors.New("subnetSetIndexFunc doesn't support unknown type")
+								}
+							},
+						}),
+					},
+				},
+			}
 			r := &SubnetSetReconciler{
-				SubnetService:  &subnet.SubnetService{},
+				SubnetService:  subnetService,
 				BindingService: &subnetbinding.BindingService{},
 			}
 			patches := tc.patches(r)

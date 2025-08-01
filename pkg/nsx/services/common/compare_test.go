@@ -21,6 +21,7 @@ func (m mockComparable) Value() data.DataValue {
 }
 
 func TestCompareResources(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name        string
 		existing    []Comparable

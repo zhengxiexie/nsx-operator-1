@@ -8,11 +8,13 @@ import (
 )
 
 func TestExcept(t *testing.T) {
+	t.Parallel()
 	notFound := CreateResourceNotFound("192.168.1.1", "ippool")
 	assert.Equal(t, 0, notFound.ErrorCode)
 }
 
 func TestCreateFunc(t *testing.T) {
+	t.Parallel()
 	funcMap := map[string]interface{}{
 		"CreateObjectAlreadyExists":                 CreateObjectAlreadyExists,
 		"CreateNotImplemented":                      CreateNotImplemented,

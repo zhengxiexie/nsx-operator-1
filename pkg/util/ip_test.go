@@ -10,6 +10,7 @@ import (
 )
 
 func Test_rangesAbstractRange(t *testing.T) {
+	t.Parallel()
 	empty := [][]net.IP{}
 	type args struct {
 		ranges [][]net.IP
@@ -194,6 +195,7 @@ func Test_rangesAbstractRange(t *testing.T) {
 }
 
 func TestGetCIDRRangesWithExcept(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		cidr    string
 		excepts []string
@@ -237,6 +239,7 @@ func TestGetCIDRRangesWithExcept(t *testing.T) {
 }
 
 func Test_calculateOffsetIP(t *testing.T) {
+	t.Parallel()
 	ip := net.ParseIP("192.168.0.1")
 	offset1 := 1
 	want1 := net.ParseIP("192.168.0.2").To4()

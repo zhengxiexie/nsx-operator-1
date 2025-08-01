@@ -22,6 +22,7 @@ var (
 )
 
 func TestBuildSubnetName(t *testing.T) {
+	t.Parallel()
 	svc := &SubnetService{
 		Service: common.Service{
 			NSXConfig: &config.NSXOperatorConfig{
@@ -47,6 +48,7 @@ func TestBuildSubnetName(t *testing.T) {
 }
 
 func TestBuildSubnetSetName(t *testing.T) {
+	t.Parallel()
 	svc := &SubnetService{
 		Service: common.Service{
 			NSXConfig: &config.NSXOperatorConfig{
@@ -75,6 +77,7 @@ func TestBuildSubnetSetName(t *testing.T) {
 }
 
 func TestBuildSubnetForSubnetSet(t *testing.T) {
+	t.Parallel()
 	mockCtl := gomock.NewController(t)
 	k8sClient := mockClient.NewMockClient(mockCtl)
 	defer mockCtl.Finish()
@@ -122,6 +125,7 @@ func TestBuildSubnetForSubnetSet(t *testing.T) {
 }
 
 func TestBuildSubnetForSubnet(t *testing.T) {
+	t.Parallel()
 	mockCtl := gomock.NewController(t)
 	k8sClient := mockClient.NewMockClient(mockCtl)
 	defer mockCtl.Finish()

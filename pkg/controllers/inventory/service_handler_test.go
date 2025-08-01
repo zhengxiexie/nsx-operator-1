@@ -17,6 +17,7 @@ import (
 )
 
 func TestWatchService(t *testing.T) {
+	t.Parallel()
 	t.Run("SuccessfullyCreateInformer", func(t *testing.T) {
 		controller := &InventoryController{}
 		mockCache := new(MockCache)
@@ -42,6 +43,7 @@ func TestWatchService(t *testing.T) {
 }
 
 func TestHandleService(t *testing.T) {
+	t.Parallel()
 	cfg := &config.NSXOperatorConfig{NsxConfig: &config.NsxConfig{}}
 	queue := MockObjectQueue[any]{}
 	inventoryService := &inventory.InventoryService{}
@@ -77,6 +79,7 @@ func TestHandleService(t *testing.T) {
 }
 
 func TestWatchEndpoint(t *testing.T) {
+	t.Parallel()
 	t.Run("SuccessfullyCreateInformer", func(t *testing.T) {
 		controller := &InventoryController{}
 		mockCache := new(MockCache)

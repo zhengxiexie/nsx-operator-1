@@ -27,6 +27,7 @@ const (
 var ns = fmt.Sprintf("test-ipaddress-allocation-%s", getRandomString())
 
 func TestIPAddressAllocation(t *testing.T) {
+	t.Parallel()
 	prepare(t)
 	defer destroy(t)
 	t.Run("testIPAddressAllocationExternal", func(t *testing.T) {

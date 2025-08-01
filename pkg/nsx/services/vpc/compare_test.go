@@ -9,6 +9,7 @@ import (
 )
 
 func TestIsVPCChanged(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		nc  v1alpha1.VPCNetworkConfiguration
 		vpc *model.Vpc

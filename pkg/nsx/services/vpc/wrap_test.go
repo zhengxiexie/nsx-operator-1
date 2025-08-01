@@ -10,6 +10,7 @@ import (
 )
 
 func TestVPCService_WrapHierarchyVPC(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		org         string
 		nsxtProject string

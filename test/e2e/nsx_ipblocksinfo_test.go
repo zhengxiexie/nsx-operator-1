@@ -25,6 +25,7 @@ var (
 )
 
 func TestIPBlocksInfo(t *testing.T) {
+	t.Parallel()
 	t.Run("case=InitialIPBlocksInfo", InitialIPBlocksInfo)
 	t.Run("case=CustomIPBlocksInfo", CustomIPBlocksInfo)
 }

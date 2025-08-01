@@ -16,12 +16,14 @@ func mockCleanupFuncWithError() (interface{}, error) {
 }
 
 func TestNewCleanupService(t *testing.T) {
+	t.Parallel()
 	service := NewCleanupService()
 	assert.NotNil(t, service)
 	assert.Nil(t, service.svcErr)
 }
 
 func TestAddCleanupService_Success(t *testing.T) {
+	t.Parallel()
 	service := NewCleanupService()
 	service.AddCleanupService(mockCleanupFunc)
 
@@ -32,6 +34,7 @@ func TestAddCleanupService_Success(t *testing.T) {
 }
 
 func TestAddCleanupService_Error(t *testing.T) {
+	t.Parallel()
 	service := NewCleanupService()
 	service.AddCleanupService(mockCleanupFuncWithError)
 

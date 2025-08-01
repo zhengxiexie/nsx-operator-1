@@ -162,6 +162,7 @@ func fakeSecurityPolicyService() *SecurityPolicyService {
 }
 
 func TestSecurityPolicyService_wrapSecurityPolicy(t *testing.T) {
+	t.Parallel()
 	Converter := bindings.NewTypeConverter()
 	service := fakeSecurityPolicyService()
 	mId, mTag, mScope := "11111", "11111", "nsx-op/security_policy_cr_uid"
@@ -197,6 +198,7 @@ func TestSecurityPolicyService_wrapSecurityPolicy(t *testing.T) {
 }
 
 func TestSecurityPolicyService_wrapGroups(t *testing.T) {
+	t.Parallel()
 	Converter := bindings.NewTypeConverter()
 	service := fakeSecurityPolicyService()
 	mId, mTag, mScope := "11111", "11111", "nsx-op/security_policy_cr_uid"
@@ -233,6 +235,7 @@ func TestSecurityPolicyService_wrapGroups(t *testing.T) {
 }
 
 func TestSecurityPolicyService_wrapRules(t *testing.T) {
+	t.Parallel()
 	Converter := bindings.NewTypeConverter()
 	service := fakeSecurityPolicyService()
 	mId, mTag, mScope := "11111", "11111", "nsx-op/security_policy_cr_uid"
@@ -269,6 +272,7 @@ func TestSecurityPolicyService_wrapRules(t *testing.T) {
 }
 
 func TestSecurityPolicyService_wrapResourceReference(t *testing.T) {
+	t.Parallel()
 	Converter := bindings.NewTypeConverter()
 	service := fakeSecurityPolicyService()
 	type args struct {

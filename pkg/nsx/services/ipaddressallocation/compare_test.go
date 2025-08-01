@@ -8,6 +8,7 @@ import (
 )
 
 func TestKey(t *testing.T) {
+	t.Parallel()
 	id := "test-id"
 	iap := &IpAddressAllocation{Id: &id}
 	assert.Equal(t, "test-id", iap.Key())
@@ -17,6 +18,7 @@ func TestKey(t *testing.T) {
 }
 
 func TestValue(t *testing.T) {
+	t.Parallel()
 	id := "test-id"
 	displayName := "test-display-name"
 	tags := []model.Tag{{Scope: String("scope"), Tag: String("tag")}}
@@ -29,6 +31,7 @@ func TestValue(t *testing.T) {
 }
 
 func TestIpAddressAllocationToComparable(t *testing.T) {
+	t.Parallel()
 	id := "test-id"
 	displayName := "test-display-name"
 	tags := []model.Tag{{Scope: String("scope"), Tag: String("tag")}}
@@ -39,6 +42,7 @@ func TestIpAddressAllocationToComparable(t *testing.T) {
 }
 
 func TestComparableToIpAddressAllocation(t *testing.T) {
+	t.Parallel()
 	id := "test-id"
 	displayName := "test-display-name"
 	tags := []model.Tag{{Scope: String("scope"), Tag: String("tag")}}

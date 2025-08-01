@@ -10,5 +10,6 @@ import (
 )
 
 func Test_GetCluster(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "k8scl-one", getCluster(service))
 }

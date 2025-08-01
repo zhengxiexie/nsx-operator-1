@@ -13,6 +13,7 @@ import (
 )
 
 func Test_GroupsEqual(t *testing.T) {
+	t.Parallel()
 	spNewGroupID := "spNewGroupID"
 	tests := []struct {
 		name            string
@@ -88,6 +89,7 @@ func Test_GroupsEqual(t *testing.T) {
 }
 
 func Test_RulesEqual(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name            string
 		inputRule1      []model.Rule
@@ -162,6 +164,7 @@ func Test_RulesEqual(t *testing.T) {
 }
 
 func Test_SecurityPolicyEqual(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name            string
 		inputPolicy1    *model.SecurityPolicy

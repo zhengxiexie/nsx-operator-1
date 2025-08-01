@@ -14,6 +14,7 @@ import (
 )
 
 func TestGenerateCertificate(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		subject   *pkix.Name
 		validDays int

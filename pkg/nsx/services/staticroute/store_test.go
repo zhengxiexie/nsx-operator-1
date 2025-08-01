@@ -13,6 +13,7 @@ import (
 )
 
 func Test_indexFunc(t *testing.T) {
+	t.Parallel()
 	mId, mTag, mScope := "test_id", "test_tag", common.TagScopeStaticRouteCRUID
 	v := model.StaticRoutes{
 		Id:   &mId,
@@ -27,6 +28,7 @@ func Test_indexFunc(t *testing.T) {
 }
 
 func Test_KeyFunc(t *testing.T) {
+	t.Parallel()
 	Id := "test_id"
 	v := model.StaticRoutes{Id: &Id}
 	t.Run("1", func(t *testing.T) {
@@ -38,6 +40,7 @@ func Test_KeyFunc(t *testing.T) {
 }
 
 func TestStaticRouteStore_CRUDResource(t *testing.T) {
+	t.Parallel()
 	staticRouteCacheIndexer := cache.NewIndexer(keyFunc, cache.Indexers{common.TagScopeStaticRouteCRUID: indexFunc})
 	resourceStore := common.ResourceStore{
 		Indexer:     staticRouteCacheIndexer,
@@ -64,6 +67,7 @@ func TestStaticRouteStore_CRUDResource(t *testing.T) {
 }
 
 func TestStaticRouteStore_CRUDResource_List(t *testing.T) {
+	t.Parallel()
 	staticRouteCacheIndexer := cache.NewIndexer(keyFunc, cache.Indexers{common.TagScopeStaticRouteCRUID: indexFunc})
 	resourceStore := common.ResourceStore{
 		Indexer:     staticRouteCacheIndexer,
@@ -144,6 +148,7 @@ func TestStaticRouteStore_CRUDResource_List(t *testing.T) {
 }
 
 func TestStaticRouteStore_GetByKey(t *testing.T) {
+	t.Parallel()
 	staticRouteCacheIndexer := cache.NewIndexer(keyFunc, cache.Indexers{common.TagScopeStaticRouteCRUID: indexFunc})
 	resourceStore := common.ResourceStore{
 		Indexer:     staticRouteCacheIndexer,
@@ -217,6 +222,7 @@ func TestStaticRouteStore_GetByKey(t *testing.T) {
 
 /*
 func TestStaticRouteStore_GetByIndex(t *testing.T) {
+		t.Parallel()
 	staticRouteCacheIndexer := cache.NewIndexer(keyFunc, cache.Indexers{common.TagScopeStaticRouteCRUID: indexFunc})
 	resourceStore := common.ResourceStore{
 		Indexer:     staticRouteCacheIndexer,

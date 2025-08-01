@@ -17,6 +17,7 @@ import (
 )
 
 func TestWatchNamespace(t *testing.T) {
+	t.Parallel()
 	t.Run("SuccessfullyCreateInformer", func(t *testing.T) {
 		controller := &InventoryController{}
 		mockCache := new(MockCache)
@@ -42,6 +43,7 @@ func TestWatchNamespace(t *testing.T) {
 }
 
 func TestHandleNamespace(t *testing.T) {
+	t.Parallel()
 	cfg := &config.NSXOperatorConfig{NsxConfig: &config.NsxConfig{}}
 	queue := MockObjectQueue[any]{}
 	inventoryService := &inventory.InventoryService{}

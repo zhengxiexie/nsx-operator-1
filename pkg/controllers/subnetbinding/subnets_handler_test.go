@@ -21,6 +21,7 @@ import (
 )
 
 func TestPredicateFuncsSubnets(t *testing.T) {
+	t.Parallel()
 	name := "net1"
 	namespace := "default"
 	net1 := &v1alpha1.Subnet{
@@ -91,6 +92,7 @@ func TestPredicateFuncsSubnets(t *testing.T) {
 }
 
 func TestPredicateFuncsSubnetSets(t *testing.T) {
+	t.Parallel()
 	name := "net1"
 	namespace := "default"
 	net1 := &v1alpha1.SubnetSet{
@@ -148,6 +150,7 @@ func TestPredicateFuncsSubnetSets(t *testing.T) {
 }
 
 func TestRequeueSubnetConnectionBindingMapsBySubnet(t *testing.T) {
+	t.Parallel()
 	myQueue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[reconcile.Request]())
 	defer myQueue.ShutDown()
 
@@ -195,6 +198,7 @@ func TestRequeueSubnetConnectionBindingMapsBySubnet(t *testing.T) {
 }
 
 func TestRequeueSubnetConnectionBindingMapsBySubnetSet(t *testing.T) {
+	t.Parallel()
 	myQueue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[reconcile.Request]())
 	defer myQueue.ShutDown()
 
