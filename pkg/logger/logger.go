@@ -105,13 +105,18 @@ func getLogLevel(cfDebug bool, cfLogLevel int) int {
 // ZapCustomLogger creates a CustomLogger with both logr.Logger and zerolog.Logger using the same configuration as ZapLogger
 func ZapCustomLogger(cfDebug bool, cfLogLevel int) CustomLogger {
 	logLevel := getLogLevel(cfDebug, cfLogLevel)
+	enableColor := logLevel >= 3
 
 	// Create the custom console writer with zap-like formatting
 	consoleWriter := zerolog.ConsoleWriter{
 		Out:        os.Stdout,
+		NoColor:    !enableColor,
 		TimeFormat: logTmFmtWithMS,
 		FormatLevel: func(i interface{}) string {
 			levelStr := strings.ToUpper(fmt.Sprintf("%s", i))
+			if !enableColor {
+				return levelStr
+			}
 			switch levelStr {
 			case "TRACE":
 				return colorWhite + levelStr + colorReset
@@ -140,6 +145,9 @@ func ZapCustomLogger(cfDebug bool, cfLogLevel int) CustomLogger {
 			if idx := strings.LastIndex(caller, "/"); idx >= 0 {
 				caller = caller[idx+1:]
 			}
+			if !enableColor {
+				return caller
+			}
 			return colorYellow + caller + colorReset
 		},
 		FormatFieldName: func(i interface{}) string {
@@ -154,7 +162,7 @@ func ZapCustomLogger(cfDebug bool, cfLogLevel int) CustomLogger {
 	// Set the log level based on the calculated level
 	var zeroLogLevel zerolog.Level
 	switch {
-	case logLevel == 2:
+	case logLevel >= 2:
 		zeroLogLevel = zerolog.TraceLevel
 	case logLevel == 1:
 		zeroLogLevel = zerolog.DebugLevel

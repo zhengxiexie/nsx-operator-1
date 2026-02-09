@@ -1,8 +1,13 @@
 package logger
 
 import (
+	"bytes"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 func TestZapLoggerLevels(t *testing.T) {
@@ -78,4 +83,96 @@ func TestCustomLogger(t *testing.T) {
 	customLogger.Error(nil, "This is an error message", "test_case", "error_test", "timestamp", time.Now().Format("15:04:05"))
 
 	t.Log("CustomLogger test completed - verify all log levels are displayed with proper formatting and colors")
+}
+
+func TestGetLogLevel(t *testing.T) {
+	testCases := []struct {
+		name     string
+		debug    bool
+		logLevel int
+		expected int
+	}{
+		{"default", false, 0, 0},
+		{"debug_flag_only", true, 0, 2},
+		{"log_level_1", false, 1, 1},
+		{"log_level_3", false, 3, 3},
+		{"debug_with_higher_level", true, 3, 3},
+		{"debug_with_lower_level", true, 1, 2},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := getLogLevel(tc.debug, tc.logLevel)
+			if got != tc.expected {
+				t.Errorf("getLogLevel(%v, %d) = %d, want %d", tc.debug, tc.logLevel, got, tc.expected)
+			}
+		})
+	}
+}
+
+func TestAnsiColorOnlyEnabledAtLevel3(t *testing.T) {
+	// Helper: create a console writer via the same logic as ZapCustomLogger,
+	// but write to a buffer so we can inspect the output.
+	buildWriter := func(logLevel int) (*bytes.Buffer, zerolog.Logger) {
+		enableColor := logLevel >= 3
+		buf := &bytes.Buffer{}
+		cw := zerolog.ConsoleWriter{
+			Out:        buf,
+			NoColor:    !enableColor,
+			TimeFormat: logTmFmtWithMS,
+			FormatLevel: func(i interface{}) string {
+			levelStr := strings.ToUpper(fmt.Sprintf("%s", i))
+				if !enableColor {
+					return levelStr
+				}
+				switch levelStr {
+				case "INFO":
+					return colorGreen + levelStr + colorReset
+				case "WARN":
+					return colorMagenta + levelStr + colorReset
+				case "ERROR":
+					return colorBrightRed + levelStr + colorReset
+				default:
+					return levelStr
+				}
+			},
+		}
+		l := zerolog.New(cw).Level(zerolog.InfoLevel)
+		return buf, l
+	}
+
+	t.Run("level_0_no_color", func(t *testing.T) {
+		buf, l := buildWriter(0)
+		l.Info().Msg("hello")
+		output := buf.String()
+		if strings.Contains(output, "\033[") {
+			t.Errorf("log-level=0 should not contain ANSI codes, got: %q", output)
+		}
+	})
+
+	t.Run("level_2_no_color", func(t *testing.T) {
+		buf, l := buildWriter(2)
+		l.Info().Msg("hello")
+		output := buf.String()
+		if strings.Contains(output, "\033[") {
+			t.Errorf("log-level=2 should not contain ANSI codes, got: %q", output)
+		}
+	})
+
+	t.Run("level_3_has_color", func(t *testing.T) {
+		buf, l := buildWriter(3)
+		l.Info().Msg("hello")
+		output := buf.String()
+		if !strings.Contains(output, "\033[") {
+			t.Errorf("log-level=3 should contain ANSI codes, got: %q", output)
+		}
+	})
+
+	t.Run("level_4_has_color", func(t *testing.T) {
+		buf, l := buildWriter(4)
+		l.Info().Msg("hello")
+		output := buf.String()
+		if !strings.Contains(output, "\033[") {
+			t.Errorf("log-level=4 should contain ANSI codes, got: %q", output)
+		}
+	})
 }
